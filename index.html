@@ -297,17 +297,19 @@ const validVec = v => Array.isArray(v) && v.length === 2 && v.every(x => Number.
 
 // คลังคีย์ระบบ 10 ชุด พร้อมคีย์ถอด K⁻¹ (mod 5) ที่คำนวณไว้สำเร็จรูปแล้ว
 // K⁻¹ = det⁻¹ · [[d, −b], [−c, a]] mod 5 — ทุกคู่ตรวจแล้วว่า K·K⁻¹ ≡ I (mod 5)
+// ไม่มีคู่ชนกัน: รหัสลับ C ≠ [0, 0] ใด ๆ ถอดด้วย K⁻¹ ทั้ง 10 ชุดได้พิกัดไม่ซ้ำกันเลย
+// (det(Kᵢ⁻¹ − Kⱼ⁻¹) ≢ 0 ทุกคู่) — ยกเว้น C = [0, 0] ที่ถอดได้ [0, 0] เสมอไม่ว่าคีย์ไหน
 const KEY_TABLE = [
-  { K: [[2, 4], [3, 2]], Kinv: [[1, 3], [1, 1]] },
-  { K: [[1, 2], [2, 2]], Kinv: [[4, 1], [1, 2]] },
-  { K: [[2, 3], [4, 4]], Kinv: [[4, 2], [1, 2]] },
-  { K: [[4, 4], [4, 1]], Kinv: [[2, 2], [2, 3]] },
-  { K: [[2, 2], [1, 2]], Kinv: [[1, 4], [2, 1]] },
-  { K: [[1, 2], [1, 4]], Kinv: [[2, 4], [2, 3]] },
-  { K: [[1, 2], [3, 3]], Kinv: [[4, 4], [1, 3]] },
-  { K: [[1, 4], [4, 4]], Kinv: [[3, 2], [2, 2]] },
-  { K: [[3, 4], [4, 3]], Kinv: [[1, 2], [2, 1]] },
+  { K: [[1, 1], [1, 2]], Kinv: [[2, 4], [4, 1]] },
+  { K: [[1, 2], [2, 1]], Kinv: [[3, 4], [4, 3]] },
+  { K: [[1, 3], [3, 1]], Kinv: [[3, 1], [1, 3]] },
   { K: [[1, 4], [4, 2]], Kinv: [[2, 1], [1, 1]] },
+  { K: [[2, 1], [1, 4]], Kinv: [[2, 2], [2, 1]] },
+  { K: [[2, 2], [2, 4]], Kinv: [[1, 2], [2, 3]] },
+  { K: [[2, 3], [3, 4]], Kinv: [[1, 3], [3, 3]] },
+  { K: [[2, 4], [4, 4]], Kinv: [[2, 3], [3, 1]] },
+  { K: [[3, 1], [1, 1]], Kinv: [[3, 2], [2, 4]] },
+  { K: [[3, 2], [2, 2]], Kinv: [[1, 4], [4, 4]] },
 ];
 const KEY_COUNT = KEY_TABLE.length;
 
@@ -338,7 +340,7 @@ function freshRound() {
 }
 function newGame() {
   G = { phase: 'lobby', round: 1, players: [], teams: [mkTeam(), mkTeam()], ...freshRound(),
-        history: [], lastResult: null, winner: null, winnerName: '', reason: '', log: [] };
+        history: [], lastResult: null, winner: null, names: ['', ''], reason: '', log: [] };
 }
 const members = t => G.players.filter(p => p.team === t);
 const captainOf = t => (members(t)[0] || {}).id || null;
@@ -369,8 +371,7 @@ function stopTimer() { clearTimeout(hostTimer); hostTimer = null; G.deadline = 0
 function endGame(winner, reason) {
   stopTimer();
   G.phase = 'over'; G.winner = winner; G.reason = reason;
-  G.winnerName = members(winner).map(p => p.name).join(', ');
-  glog(`🏆 ${G.winnerName} (ผู้เล่น ${TEAM[winner]}) ชนะ! (${reason})`, 'ok');
+  glog(`🏆 ${G.names[winner]} (ผู้เล่น ${TEAM[winner]}) ชนะ • ${G.names[1 - winner]} (ผู้เล่น ${TEAM[1 - winner]}) แพ้ (${reason})`, 'ok');
 }
 
 function startTurn() {
@@ -404,6 +405,7 @@ function handleAction(pid, a) {
     case 'start':
       if (pid !== HOST_ID || G.phase !== 'lobby' || !members(0).length || !members(1).length) return;
       G.phase = 'setup';
+      G.names = [0, 1].map(t => members(t).map(p => p.name).join(', '));
       glog('เริ่มเกม! ผู้เล่นแต่ละคนเลือกคีย์ 3 ชุดและวางเรือ', 'ok');
       break;
     case 'setup': {
@@ -485,7 +487,7 @@ function handleAction(pid, a) {
     case 'rematch':
       if (pid !== HOST_ID || G.phase !== 'over') return;
       Object.assign(G, { phase: 'lobby', round: 1, teams: [mkTeam(), mkTeam()], ...freshRound(),
-        history: [], lastResult: null, winner: null, winnerName: '', reason: '', log: [] });
+        history: [], lastResult: null, winner: null, names: ['', ''], reason: '', log: [] });
       glog('กลับสู่ห้องรอ — กดเริ่มเกมใหม่ได้เลย');
       break;
     default:
@@ -543,7 +545,7 @@ function view(pid) {
     triesCount: G.tries.length,
     announced: G.announced,
     remain: G.deadline ? Math.max(0, G.deadline - Date.now()) : 0,
-    history: G.history, lastResult: G.lastResult, winner: G.winner, winnerName: G.winnerName, reason: G.reason,
+    history: G.history, lastResult: G.lastResult, winner: G.winner, names: G.names, reason: G.reason,
     log: G.log.filter(e => e.vis === null || e.vis === myTeam).slice(-40),
   };
 }
@@ -815,11 +817,13 @@ function renderWin() {
   const show = V.phase === 'over' && !Lc.winClosed;
   el.classList.toggle('hidden', !show);
   if (!show) return;
-  const won = V.winner === V.myTeam;
+  const won = V.winner === V.myTeam, loser = 1 - V.winner;
   el.innerHTML = `<div class="win-card">
     <div class="trophy">🏆</div>
-    <h2>${esc(V.winnerName)} ชนะ!</h2>
-    <p>${teamTag(V.winner)}</p>
+    <p class="muted" style="margin-top:12px">ผู้ชนะ</p>
+    <h2 style="margin-top:0">${esc(V.names[V.winner])} <span style="font-size:18px">(${teamTag(V.winner)})</span></h2>
+    <p class="muted" style="margin-top:12px">ผู้แพ้</p>
+    <p style="font-size:20px;margin-top:0">💀 ${esc(V.names[loser])} (${teamTag(loser)})</p>
     <p class="muted">${esc(V.reason)}</p>
     <p>${won ? '🎉 ยินดีด้วย คุณชนะ!' : '💀 คุณแพ้ — ลองใหม่อีกครั้งนะ'}</p>
     <div class="row" style="justify-content:center;margin-top:14px"><button class="primary" data-act="closeWin">ปิด</button></div>
@@ -874,7 +878,7 @@ function panelHTML() {
   }
   if (V.phase === 'over') {
     const won = V.winner === V.myTeam;
-    return `<div class="banner ${won ? 'ok' : 'bad'}">🏆 ${esc(V.winnerName)} (ผู้เล่น ${TEAM[V.winner]}) ชนะ! — ${won ? 'คุณชนะ' : 'คุณแพ้'}</div>
+    return `<div class="banner ${won ? 'ok' : 'bad'}">${won ? '🏆 คุณชนะ!' : '💀 คุณแพ้'}<br>ผู้ชนะ: ${esc(V.names[V.winner])} (ผู้เล่น ${TEAM[V.winner]}) • ผู้แพ้: ${esc(V.names[1 - V.winner])} (ผู้เล่น ${TEAM[1 - V.winner]})</div>
       <p class="muted">${esc(V.reason)}</p>
       ${lastResultHTML()}
       <div class="row" style="margin-top:10px">${isHost ? '<button class="primary" data-act="rematch">เล่นอีกครั้ง (กลับห้องรอ)</button>' : '<span class="muted">รอเจ้าของห้องเริ่มเกมใหม่…</span>'}</div>`;
