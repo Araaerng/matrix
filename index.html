@@ -179,7 +179,7 @@
 </head>
 <body>
 <header>
-  <h1>⚓ Matrix <span>Battle</span> <span class="muted" style="font-weight:400">— ฝึก Hill Cipher mod 26 แบบทีม</span></h1>
+  <h1>⚓ Matrix <span>Battle</span> <span class="muted" style="font-weight:400">— ฝึก Hill Cipher mod 5 แบบ 2 ผู้เล่น</span></h1>
   <div class="status" id="status">ยังไม่ได้เชื่อมต่อ</div>
 </header>
 
@@ -190,12 +190,12 @@
       <h2>วิธีเล่น</h2>
       <ol>
         <li>คนหนึ่งสร้างห้อง แล้วส่งรหัสห้อง (หรือลิงก์) ให้เพื่อน ๆ — เชื่อมต่อแบบ Peer-to-Peer ไม่ต้องสมัครสมาชิก แค่ตั้งชื่อเล่น</li>
-        <li>แบ่งเป็น <b class="tA">ทีม A</b> และ <b class="tB">ทีม B</b> แต่ละทีมมีเรือ 1 ลำ (<span id="hpText"></span> HP) คนแรกของทีมเป็นกัปตัน ⭐</li>
-        <li>ตอนเริ่มเกม กัปตันเลือก <b>คีย์ 3 ชุด</b> จากคลังคีย์ระบบ 10 ชุด (เป็นความลับ) ไว้ใช้ทั้งเกม แล้ววางเรือ</li>
-        <li><b>ผู้ยิง</b> (วนกันในทีม) เลือกพิกัด เลือก 1 ใน 3 คีย์ของทีม แล้วส่งรหัสลับ C = K·P mod 26</li>
-        <li><b>ทีมรับ</b> มีเวลา 2 นาที สุ่มคีย์จากทั้ง 10 ชุดมาลองถอด P = K⁻¹·C mod 26 ได้ <b>เทิร์นละ 3 ครั้ง</b> แล้วกัปตันเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
+        <li>เล่น 2 คน: <b class="tA">ผู้เล่น A</b> และ <b class="tB">ผู้เล่น B</b> แต่ละคนมีเรือ 1 ลำ (<span id="hpText"></span> HP) บนทะเล 5×5 — ผลัดกันเป็น<b>ฝ่ายยิง</b>และ<b>ฝ่ายรับ</b></li>
+        <li>ตอนเริ่มเกม แต่ละคนเลือก <b>คีย์ 3 ชุด</b> จากคลังคีย์ระบบ 10 ชุด (เป็นความลับ) ไว้ใช้ทั้งเกม แล้ววางเรือ</li>
+        <li><b>ฝ่ายยิง</b> เลือกพิกัด เลือก 1 ใน 3 คีย์ของตัวเอง แล้วส่งรหัสลับ C = K·P mod 5 (พิกัด A–E = 0–4, 1–5 = 0–4)</li>
+        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที สุ่มคีย์จากทั้ง 10 ชุดมาลองถอด P = K⁻¹·C mod 5 ได้ <b>เทิร์นละ 3 ครั้ง</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
         <li>ประกาศ<b>ถูก</b> → คีย์ที่ผู้ยิงใช้ถูก<b>แบน</b> และขยับเรือหนีได้ 1 ช่อง (8 ทิศ) • ประกาศผิด/หมดเวลา → รับระเบิดลูกนั้น เข้าก็เข้า พลาดก็พลาด</li>
-        <li>ระบบประกาศ <b>เข้า / พลาด</b> ให้ทั้งสองทีมทุกครั้ง • แพ้เมื่อ <b>ถูกแบนคีย์ครบ 3</b> หรือ <b>เรือจม</b></li>
+        <li>ระบบประกาศ <b>เข้า / พลาด</b> ให้ทั้งสองฝ่ายทุกครั้ง • แพ้เมื่อ <b>ถูกแบนคีย์ครบ 3</b> หรือ <b>เรือจม</b></li>
       </ol>
     </div>
     <div class="card wide">
@@ -219,7 +219,7 @@
     </div>
   </section>
 
-  <!-- ===== ห้องรอ / เลือกทีม ===== -->
+  <!-- ===== ห้องรอ ===== -->
   <section id="room" class="card hidden">
     <h2>ห้อง <span class="mono room-code" id="roomCode" style="font-size:24px"></span></h2>
     <div class="row">
@@ -233,12 +233,12 @@
   <!-- ===== เกม ===== -->
   <section id="game" class="hidden">
     <div class="card board-wrap">
-      <h3><span id="mineTitle">ทะเลทีมเรา</span> <span class="hp" id="myHP"></span></h3>
+      <h3><span id="mineTitle">ทะเลของเรา</span> <span class="hp" id="myHP"></span></h3>
       <div class="members" id="mineMembers"></div>
       <div class="board" id="boardMine"></div>
     </div>
     <div class="card board-wrap">
-      <h3><span id="enemyTitle">ทะเลทีมตรงข้าม</span> <span class="hp" id="oppHP"></span></h3>
+      <h3><span id="enemyTitle">ทะเลฝ่ายตรงข้าม</span> <span class="hp" id="oppHP"></span></h3>
       <div class="members" id="enemyMembers"></div>
       <div class="board" id="boardEnemy"></div>
     </div>
@@ -260,14 +260,14 @@
 <script>
 // ===== ค่าคงที่ของเกม =====
 const N = 5;              // ทะเล 5x5 (A-E, 1-5)
-const MOD = 26;           // A-Z
+const MOD = 5;            // พิกัด 0-4 บนทะเล 5x5
 const MAX_HP = 3;         // ยิงเข้า 1 ครั้ง = −1
-const TEAM_KEYS = 3;      // คีย์ที่แต่ละทีมเลือกใช้ทั้งเกม (ถูกแบนครบ = แพ้)
-const ROLLS_PER_TURN = 3; // ทีมรับสุ่มคีย์มาลองถอดได้กี่ครั้งต่อเทิร์น (รวมทั้งทีม)
-const ANNOUNCES = 4;      // สิทธิ์ประกาศพิกัดของแต่ละทีมตลอดทั้งเกม (เทิร์นละไม่เกิน 1)
-const DECODE_TIME = 120;  // วินาที ให้ทีมรับถอดรหัสและประกาศ
-const MOVE_TIME = 30;     // วินาที ให้กัปตันขยับเรือหลังประกาศถูก
-const MAX_PLAYERS = 12;
+const TEAM_KEYS = 3;      // คีย์ที่ผู้เล่นแต่ละคนเลือกใช้ทั้งเกม (ถูกแบนครบ = แพ้)
+const ROLLS_PER_TURN = 3; // ฝ่ายรับสุ่มคีย์มาลองถอดได้กี่ครั้งต่อเทิร์น
+const ANNOUNCES = 4;      // สิทธิ์ประกาศพิกัดของผู้เล่นแต่ละคนตลอดทั้งเกม (เทิร์นละไม่เกิน 1)
+const DECODE_TIME = 120;  // วินาที ให้ฝ่ายรับถอดรหัสและประกาศ
+const MOVE_TIME = 30;     // วินาที ให้ฝ่ายรับขยับเรือหลังประกาศถูก
+const MAX_PLAYERS = 2;     // ผู้เล่น A กับ B
 const PREFIX = 'mtxbattle-';
 const TEAM = ['A', 'B'];
 
@@ -276,7 +276,7 @@ const mod = a => ((a % MOD) + MOD) % MOD;
 const L = n => String.fromCharCode(65 + n);
 const cellName = (r, c) => L(r) + (c + 1);
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
-const teamTag = t => `<b class="t${TEAM[t]}">ทีม ${TEAM[t]}</b>`;
+const teamTag = t => `<b class="t${TEAM[t]}">ผู้เล่น ${TEAM[t]}</b>`;
 const samePos = (a, b) => !!a && !!b && a[0] === b[0] && a[1] === b[1];
 const validPos = p => Array.isArray(p) && p.length === 2 && p.every(x => Number.isInteger(x) && x >= 0 && x < N);
 const inGrid = p => p[0] < N && p[1] < N;
@@ -285,21 +285,21 @@ function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 
 // ===== คณิตศาสตร์เมทริกซ์ (พอร์ตจาก matrix.py) =====
 const mul = (K, v) => [mod(K[0][0] * v[0] + K[0][1] * v[1]), mod(K[1][0] * v[0] + K[1][1] * v[1])];
-const textOf = v => L(v[0]) + L(v[1]);
+const textOf = v => `[${v[0]}, ${v[1]}]`;
 
-// คลังคีย์ระบบ 10 ชุด พร้อมคีย์ถอด K⁻¹ (mod 26) ที่คำนวณไว้สำเร็จรูปแล้ว
-// จาก matrix.py: K⁻¹ = det⁻¹ · [[d, −b], [−c, a]] mod 26 — ทุกคู่ตรวจแล้วว่า K·K⁻¹ ≡ I (mod 26)
+// คลังคีย์ระบบ 10 ชุด พร้อมคีย์ถอด K⁻¹ (mod 5) ที่คำนวณไว้สำเร็จรูปแล้ว
+// K⁻¹ = det⁻¹ · [[d, −b], [−c, a]] mod 5 — ทุกคู่ตรวจแล้วว่า K·K⁻¹ ≡ I (mod 5)
 const KEY_TABLE = [
-  { K: [[3, 3], [2, 5]], Kinv: [[15, 17], [20, 9]] },
-  { K: [[9, 1], [7, 4]], Kinv: [[10, 17], [15, 3]] },
-  { K: [[5, 3], [4, 3]], Kinv: [[1, 25], [16, 19]] },
-  { K: [[4, 1], [3, 5]], Kinv: [[11, 3], [9, 14]] },
-  { K: [[9, 9], [5, 6]], Kinv: [[18, 25], [11, 1]] },
-  { K: [[3, 5], [6, 5]], Kinv: [[17, 9], [16, 5]] },
-  { K: [[7, 6], [9, 9]], Kinv: [[1, 8], [25, 21]] },
-  { K: [[3, 6], [6, 1]], Kinv: [[11, 12], [12, 7]] },
-  { K: [[5, 6], [3, 3]], Kinv: [[25, 2], [1, 7]] },
-  { K: [[2, 9], [9, 2]], Kinv: [[2, 17], [17, 2]] },
+  { K: [[2, 4], [3, 2]], Kinv: [[1, 3], [1, 1]] },
+  { K: [[1, 2], [2, 2]], Kinv: [[4, 1], [1, 2]] },
+  { K: [[2, 3], [4, 4]], Kinv: [[4, 2], [1, 2]] },
+  { K: [[4, 4], [4, 1]], Kinv: [[2, 2], [2, 3]] },
+  { K: [[2, 2], [1, 2]], Kinv: [[1, 4], [2, 1]] },
+  { K: [[1, 2], [1, 4]], Kinv: [[2, 4], [2, 3]] },
+  { K: [[1, 2], [3, 3]], Kinv: [[4, 4], [1, 3]] },
+  { K: [[1, 4], [4, 4]], Kinv: [[3, 2], [2, 2]] },
+  { K: [[3, 4], [4, 3]], Kinv: [[1, 2], [2, 1]] },
+  { K: [[1, 4], [4, 2]], Kinv: [[2, 1], [1, 1]] },
 ];
 const KEY_COUNT = KEY_TABLE.length;
 
@@ -311,14 +311,14 @@ function explainMul(K, v, name, outName) {
   const r = mul(K, v);
   const line = i => {
     const raw = K[i][0] * v[0] + K[i][1] * v[1];
-    return `${outName}${i + 1} = (${K[i][0]}×${v[0]} + ${K[i][1]}×${v[1]}) mod 26 = ${raw} mod 26 = ${r[i]} → ${L(r[i])}`;
+    return `${outName}${i + 1} = (${K[i][0]}×${v[0]} + ${K[i][1]}×${v[1]}) mod ${MOD} = ${raw} mod ${MOD} = ${r[i]}`;
   };
-  return `${outName} = ${name} · v mod 26\n${line(0)}\n${line(1)}`;
+  return `${outName} = ${name} · v mod ${MOD}\n${line(0)}\n${line(1)}`;
 }
 
 // =====================================================================
 //  ฝั่งเจ้าของห้อง (Host) — ถือสถานะเกมจริง ผู้เล่นอื่นส่งแค่ "การกระทำ" มา
-//  แล้ว host ส่งมุมมองที่กรองแล้วกลับไปให้แต่ละคน (ทีมรับไม่เห็นพิกัด/คีย์จริง)
+//  แล้ว host ส่งมุมมองที่กรองแล้วกลับไปให้แต่ละคน (ฝ่ายรับไม่เห็นพิกัด/คีย์จริง)
 // =====================================================================
 let G = null;                 // สถานะเกม (มีเฉพาะ host)
 const conns = new Map();      // peerId -> DataConnection (host)
@@ -362,19 +362,19 @@ function stopTimer() { clearTimeout(hostTimer); hostTimer = null; G.deadline = 0
 function endGame(winner, reason) {
   stopTimer();
   G.phase = 'over'; G.winner = winner; G.reason = reason;
-  glog(`🏆 ทีม ${TEAM[winner]} ชนะ! (${reason})`, 'ok');
+  glog(`🏆 ผู้เล่น ${TEAM[winner]} ชนะ! (${reason})`, 'ok');
 }
 
 function startTurn() {
   Object.assign(G, freshRound());
   G.turnPhase = 'aim';
-  glog(`— รอบ ${G.round}: ทีม ${TEAM[shootingTeam()]} ยิง • ผู้ยิงคือ ${pname(shooterId())}`);
+  glog(`— รอบ ${G.round}: ผู้เล่น ${TEAM[shootingTeam()]} ยิง • ผู้ยิงคือ ${pname(shooterId())}`);
 }
 
 function checkTeamsAlive() {
   if (G.phase !== 'setup' && G.phase !== 'battle') return;
   for (const t of [0, 1]) {
-    if (!members(t).length) { endGame(1 - t, `ทีม ${TEAM[t]} ไม่มีผู้เล่นเหลือ`); return; }
+    if (!members(t).length) { endGame(1 - t, `ผู้เล่น ${TEAM[t]} ไม่มีผู้เล่นเหลือ`); return; }
   }
 }
 
@@ -390,17 +390,13 @@ function handleAction(pid, a) {
       const name = String(a.name || '').trim().slice(0, 16) || 'ผู้เล่น-' + pid.slice(-4);
       const team = members(0).length <= members(1).length ? 0 : 1;
       G.players.push({ id: pid, name, team });
-      glog(`${name} เข้าห้อง (ทีม ${TEAM[team]})`);
+      glog(`${name} เข้าห้อง (ผู้เล่น ${TEAM[team]})`);
       break;
     }
-    case 'team':
-      if (G.phase !== 'lobby') return;
-      p.team = a.team === 1 ? 1 : 0;
-      break;
     case 'start':
       if (pid !== HOST_ID || G.phase !== 'lobby' || !members(0).length || !members(1).length) return;
       G.phase = 'setup';
-      glog('เริ่มเกม! กัปตันแต่ละทีมเลือกคีย์ 3 ชุดและวางเรือ', 'ok');
+      glog('เริ่มเกม! ผู้เล่นแต่ละคนเลือกคีย์ 3 ชุดและวางเรือ', 'ok');
       break;
     case 'setup': {
       const team = G.teams[p.team];
@@ -408,7 +404,7 @@ function handleAction(pid, a) {
       const keys = Array.isArray(a.keys) ? [...new Set(a.keys)] : [];
       if (keys.length !== TEAM_KEYS || !keys.every(k => Number.isInteger(k) && k >= 0 && k < KEY_COUNT) || !validPos(a.pos)) return;
       team.keys = keys; team.ship = a.pos;
-      glog(`ทีม ${TEAM[p.team]} เลือกคีย์และวางเรือเรียบร้อย`);
+      glog(`ผู้เล่น ${TEAM[p.team]} เลือกคีย์และวางเรือเรียบร้อย`);
       if (G.teams.every(t => t.keys)) { G.phase = 'battle'; glog('⚔️ เริ่มการรบ!', 'ok'); startTurn(); }
       break;
     }
@@ -420,16 +416,16 @@ function handleAction(pid, a) {
       G.shot = { shooterId: pid, target: a.target, keyIdx: a.keyIdx, cipher };
       G.turnPhase = 'defend';
       G.tries = [];
-      glog(`🎯 ${p.name} เล็ง ${cellName(...a.target)} ด้วยคีย์ #${a.keyIdx + 1} → ส่ง "${textOf(cipher)}"`, '', p.team);
-      glog(`📨 ${p.name} ส่งรหัสลับ "${textOf(cipher)}" มา — มีเวลา ${DECODE_TIME / 60} นาที!`, 'warn', 1 - p.team);
+      glog(`🎯 ${p.name} เล็ง ${cellName(...a.target)} ด้วยคีย์ #${a.keyIdx + 1} → ส่ง ${textOf(cipher)}`, '', p.team);
+      glog(`📨 ${p.name} ส่งรหัสลับ ${textOf(cipher)} มา — มีเวลา ${DECODE_TIME / 60} นาที!`, 'warn', 1 - p.team);
       startTimer(DECODE_TIME, () => {
-        glog(`⏰ หมดเวลา — ทีม ${TEAM[defTeamNow()]} ไม่ได้ประกาศพิกัด ต้องรับระเบิดลูกนี้`, 'warn');
+        glog(`⏰ หมดเวลา — ผู้เล่น ${TEAM[defTeamNow()]} ไม่ได้ประกาศพิกัด ต้องรับระเบิดลูกนี้`, 'warn');
         resolveShot();
       });
       break;
     }
     case 'roll': {
-      // สุ่มคีย์ที่ทีมยังไม่เคยลองในรอบนี้ (คนละ 1 คีย์ที่ค้างอยู่)
+      // สุ่มคีย์ที่ฝ่ายรับยังไม่เคยลองในรอบนี้ (คนละ 1 คีย์ที่ค้างอยู่)
       if (!battle || G.turnPhase !== 'defend' || p.team !== defTeam) return;
       if (G.tries.some(t => t.pid === pid && !t.P) || G.tries.length >= ROLLS_PER_TURN) return;
       const left = [...Array(KEY_COUNT).keys()].filter(k => !G.tries.some(t => t.keyIdx === k));
@@ -444,7 +440,7 @@ function handleAction(pid, a) {
       const tr = G.tries.find(t => t.pid === pid && !t.P);
       if (!tr) return;
       tr.P = mul(KEY_TABLE[tr.keyIdx].Kinv, G.shot.cipher);
-      glog(`🔓 ${p.name} ถอดด้วยคีย์ #${tr.keyIdx + 1} ได้ "${textOf(tr.P)}"` + (inGrid(tr.P) ? ` → พิกัด ${cellName(...tr.P)}` : ' → นอกกระดาน'), '', p.team);
+      glog(`🔓 ${p.name} ถอดด้วยคีย์ #${tr.keyIdx + 1} ได้ ${textOf(tr.P)}` + (inGrid(tr.P) ? ` → พิกัด ${cellName(...tr.P)}` : ' → นอกกระดาน'), '', p.team);
       break;
     }
     case 'announce': {
@@ -454,30 +450,30 @@ function handleAction(pid, a) {
       G.teams[defTeam].announcesLeft--;
       const correct = samePos(tr.P, G.shot.target);
       G.announced = { P: tr.P, correct };
-      glog(`📣 ทีม ${TEAM[defTeam]} ประกาศว่าพิกัดคือ ${cellName(...tr.P)} (สิทธิ์เหลือ ${G.teams[defTeam].announcesLeft}/${ANNOUNCES})`, 'warn');
+      glog(`📣 ผู้เล่น ${TEAM[defTeam]} ประกาศว่าพิกัดคือ ${cellName(...tr.P)} (สิทธิ์เหลือ ${G.teams[defTeam].announcesLeft}/${ANNOUNCES})`, 'warn');
       if (!correct) {
-        glog(`✘ ประกาศผิด — ทีม ${TEAM[defTeam]} หลบไม่ได้`, 'bad');
+        glog(`✘ ประกาศผิด — ผู้เล่น ${TEAM[defTeam]} หลบไม่ได้`, 'bad');
         resolveShot();
         break;
       }
       const shooters = G.teams[st];
       shooters.banned.push(G.shot.keyIdx);
-      glog(`✔ ประกาศถูก! คีย์ #${G.shot.keyIdx + 1} ของทีม ${TEAM[st]} ถูกแบน (แบนแล้ว ${shooters.banned.length}/${TEAM_KEYS})`, 'ok');
-      if (shooters.banned.length >= TEAM_KEYS) { endGame(defTeam, `ทีม ${TEAM[st]} ถูกแบนคีย์ครบ ${TEAM_KEYS} ชุด`); break; }
+      glog(`✔ ประกาศถูก! คีย์ #${G.shot.keyIdx + 1} ของผู้เล่น ${TEAM[st]} ถูกแบน (แบนแล้ว ${shooters.banned.length}/${TEAM_KEYS})`, 'ok');
+      if (shooters.banned.length >= TEAM_KEYS) { endGame(defTeam, `ผู้เล่น ${TEAM[st]} ถูกแบนคีย์ครบ ${TEAM_KEYS} ชุด`); break; }
       G.turnPhase = 'move';
       startTimer(MOVE_TIME, () => { glog('⏰ หมดเวลาขยับเรือ — เรืออยู่ที่เดิม', 'warn'); resolveShot(); });
       break;
     }
     case 'takeBomb':
       if (!battle || G.turnPhase !== 'defend' || captainOf(defTeam) !== pid) return;
-      glog(`🛡️ ทีม ${TEAM[defTeam]} ไม่ประกาศพิกัด — รับระเบิดลูกนี้`, 'warn');
+      glog(`🛡️ ผู้เล่น ${TEAM[defTeam]} ไม่ประกาศพิกัด — รับระเบิดลูกนี้`, 'warn');
       resolveShot();
       break;
     case 'move': {
       if (!battle || G.turnPhase !== 'move' || captainOf(defTeam) !== pid || !validPos(a.pos)) return;
       const team = G.teams[defTeam];
       if (king(a.pos, team.ship) > 1) return;
-      if (!samePos(a.pos, team.ship)) glog(`🚢 กัปตันขยับเรือ 1 ช่อง`, '', defTeam);
+      if (!samePos(a.pos, team.ship)) glog(`🚢 ขยับเรือ 1 ช่อง`, '', defTeam);
       team.ship = a.pos;
       resolveShot();
       break;
@@ -486,7 +482,7 @@ function handleAction(pid, a) {
       if (pid !== HOST_ID || G.phase !== 'over') return;
       Object.assign(G, { phase: 'lobby', round: 1, teams: [mkTeam(), mkTeam()], ...freshRound(),
         history: [], lastResult: null, winner: null, reason: '', log: [] });
-      glog('กลับสู่ห้องรอ — เลือกทีมแล้วเริ่มใหม่ได้เลย');
+      glog('กลับสู่ห้องรอ — กดเริ่มเกมใหม่ได้เลย');
       break;
     default:
       return;
@@ -495,7 +491,7 @@ function handleAction(pid, a) {
 }
 const defTeamNow = () => 1 - shootingTeam();
 
-// ระเบิดตก — ประกาศ "เข้า/พลาด" ให้ทั้งสองทีม
+// ระเบิดตก — ประกาศ "เข้า/พลาด" ให้ทั้งสองฝ่าย
 function resolveShot() {
   stopTimer();
   const st = shootingTeam(), dt = 1 - st, team = G.teams[dt];
@@ -504,10 +500,10 @@ function resolveShot() {
   if (hit) team.hp = Math.max(0, team.hp - 1);
   G.history.push({ by: st, r: tr, c: tc, hit });
   G.lastResult = { round: G.round, by: st, target: G.shot.target, hit, announced: G.announced };
-  glog(hit ? `💥 เข้า! ทีม ${TEAM[st]} ยิงโดนเรือทีม ${TEAM[dt]} ที่ ${cellName(tr, tc)} (HP เหลือ ${team.hp})`
-           : `🌊 พลาด! ทีม ${TEAM[st]} ยิงที่ ${cellName(tr, tc)} ไม่โดน`, hit ? 'bad' : '');
+  glog(hit ? `💥 เข้า! ผู้เล่น ${TEAM[st]} ยิงโดนเรือผู้เล่น ${TEAM[dt]} ที่ ${cellName(tr, tc)} (HP เหลือ ${team.hp})`
+           : `🌊 พลาด! ผู้เล่น ${TEAM[st]} ยิงที่ ${cellName(tr, tc)} ไม่โดน`, hit ? 'bad' : '');
   G.teams[st].shotCount++;
-  if (team.hp <= 0) { endGame(st, `เรือทีม ${TEAM[dt]} จม`); return; }
+  if (team.hp <= 0) { endGame(st, `เรือผู้เล่น ${TEAM[dt]} จม`); return; }
   G.round++;
   startTurn();
 }
@@ -523,7 +519,7 @@ function playerLeft(pid) {
   broadcast();
 }
 
-// มุมมองที่แต่ละคนเห็น — ซ่อนเรือ/คีย์ของอีกทีม และพิกัดเป้า/คีย์ผู้ยิงจากทีมรับ
+// มุมมองที่แต่ละคนเห็น — ซ่อนเรือ/คีย์ของอีกฝ่าย และพิกัดเป้า/คีย์ผู้ยิงจากฝ่ายรับ
 function view(pid) {
   const me = G.players.find(p => p.id === pid);
   const myTeam = me ? me.team : null;
@@ -710,15 +706,14 @@ function renderRoom() {
   $('#roomCode').textContent = roomCode;
   $('#teamCols').innerHTML = [0, 1].map(t => `
     <div class="team-col ${TEAM[t]}">
-      <h3>${teamTag(t)} <span class="muted">${teamMembers(t).length} คน</span></h3>
-      <ul>${teamMembers(t).map((p, i) => `<li>${i === 0 ? '⭐ ' : ''}${esc(p.name)}${p.id === V.me ? ' <span class="muted">(คุณ)</span>' : ''}${p.id === HOST_ID ? ' <span class="badge">เจ้าของห้อง</span>' : ''}</li>`).join('')}</ul>
-      ${V.myTeam === t ? '' : `<button class="small" data-team="${t}">ย้ายมาทีม ${TEAM[t]}</button>`}
+      <h3>${teamTag(t)}</h3>
+      <ul>${teamMembers(t).length ? '' : '<li class="muted">รอผู้เล่น…</li>'}${teamMembers(t).map(p => `<li>${esc(p.name)}${p.id === V.me ? ' <span class="muted">(คุณ)</span>' : ''}${p.id === HOST_ID ? ' <span class="badge">เจ้าของห้อง</span>' : ''}</li>`).join('')}</ul>
     </div>`).join('');
   const ready = teamMembers(0).length && teamMembers(1).length;
   $('#roomActions').innerHTML = isHost
     ? `<button class="primary" id="btnStart" ${ready ? '' : 'disabled'}>เริ่มเกม</button>
-       <span class="muted">${ready ? '⭐ = กัปตัน (คนแรกของทีม) เลือกคีย์ วางเรือ ประกาศพิกัด และขยับเรือ' : 'ต้องมีผู้เล่นอย่างน้อยทีมละ 1 คน'}</span>`
-    : `<span class="muted">รอเจ้าของห้องกดเริ่มเกม… (⭐ = กัปตันทีม)</span>`;
+       <span class="muted">${ready ? 'ผู้เล่นครบ 2 คนแล้ว' : 'รอผู้เล่นอีก 1 คน — ส่งรหัสห้องหรือลิงก์เชิญให้เพื่อน'}</span>`
+    : `<span class="muted">รอเจ้าของห้องกดเริ่มเกม…</span>`;
 }
 
 function renderHeaders() {
@@ -726,11 +721,11 @@ function renderHeaders() {
   const bar = t => Array.from({ length: MAX_HP }, (_, i) => `<i class="${i < V.teams[t].hp ? '' : 'lost'}"></i>`).join('') +
     `<span class="badge" title="คีย์ที่ถูกแบน">🔒 ${V.teams[t].banned.length}/${TEAM_KEYS}</span>` +
     `<span class="badge" title="สิทธิ์ประกาศพิกัดที่เหลือ">📣 ${V.teams[t].announcesLeft}/${ANNOUNCES}</span>`;
-  $('#mineTitle').innerHTML = `ทะเล${teamTag(my)} (ทีมเรา)`;
-  $('#enemyTitle').innerHTML = `ทะเล${teamTag(op)}`;
+  $('#mineTitle').innerHTML = `ทะเลของเรา (${teamTag(my)})`;
+  $('#enemyTitle').innerHTML = `ทะเลของ${teamTag(op)}`;
   $('#myHP').innerHTML = bar(my);
   $('#oppHP').innerHTML = bar(op);
-  const list = t => teamMembers(t).map(p => (V.captains[t] === p.id ? '⭐' : '') + esc(p.name) + (p.id === V.shooterId ? ' 🎯' : '')).join(' · ');
+  const list = t => teamMembers(t).map(p => esc(p.name) + (p.id === V.shooterId ? ' 🎯' : '')).join(' · ');
   $('#mineMembers').innerHTML = list(my);
   $('#enemyMembers').innerHTML = list(op);
 }
@@ -794,8 +789,8 @@ function renderKeys() {
       : iAim() ? Lc.keyIdx === i
       : (V.shot && V.shot.keyIdx === i) || (myOpenTry() && myOpenTry().keyIdx === i);
     const tags = [];
-    if (isOwn) tags.push(`<span class="tag own">คีย์ทีมเรา</span>`);
-    banned.forEach(t => tags.push(`<span class="tag ban">แบน: ทีม ${TEAM[t]}</span>`));
+    if (isOwn) tags.push(`<span class="tag own">คีย์ของเรา</span>`);
+    banned.forEach(t => tags.push(`<span class="tag ban">แบน: ผู้เล่น ${TEAM[t]}</span>`));
     const tr = triedBy[i];
     if (tr) tags.push(`<span class="tag tried">${tr.P ? (inGrid(tr.P) ? 'ได้ ' + cellName(...tr.P) : 'นอกกระดาน') : 'กำลังลอง'}</span>`);
     return `<div class="key ${pickable ? 'pick' : ''} ${on ? 'on' : ''} ${banned.length ? 'banned' : ''}" data-key="${i}">
@@ -842,8 +837,8 @@ function renderPanel() {
 function lastResultHTML() {
   const r = V.lastResult;
   if (!r) return '';
-  const ann = r.announced ? ` • ทีม ${TEAM[1 - r.by]} ประกาศ ${cellName(...r.announced.P)} ${r.announced.correct ? '(ถูก)' : '(ผิด)'}` : ` • ทีม ${TEAM[1 - r.by]} ไม่ได้ประกาศ`;
-  return `<div class="banner ${r.hit ? 'bad' : 'info'}" style="font-weight:400;font-size:14px">รอบ ${r.round}: ทีม ${TEAM[r.by]} ยิง ${cellName(...r.target)} → <b>${r.hit ? '💥 เข้า' : '🌊 พลาด'}</b>${ann}</div>`;
+  const ann = r.announced ? ` • ผู้เล่น ${TEAM[1 - r.by]} ประกาศ ${cellName(...r.announced.P)} ${r.announced.correct ? '(ถูก)' : '(ผิด)'}` : ` • ผู้เล่น ${TEAM[1 - r.by]} ไม่ได้ประกาศ`;
+  return `<div class="banner ${r.hit ? 'bad' : 'info'}" style="font-weight:400;font-size:14px">รอบ ${r.round}: ผู้เล่น ${TEAM[r.by]} ยิง ${cellName(...r.target)} → <b>${r.hit ? '💥 เข้า' : '🌊 พลาด'}</b>${ann}</div>`;
 }
 
 function panelHTML() {
@@ -853,32 +848,32 @@ function panelHTML() {
   }
   if (V.phase === 'over') {
     const won = V.winner === V.myTeam;
-    return `<div class="banner ${won ? 'ok' : 'bad'}">${won ? '🏆 ทีมคุณชนะ!' : '💀 ทีมคุณแพ้'} — ${esc(V.reason)}</div>
+    return `<div class="banner ${won ? 'ok' : 'bad'}">${won ? '🏆 คุณชนะ!' : '💀 คุณแพ้'} — ${esc(V.reason)}</div>
       ${lastResultHTML()}
-      <div class="row" style="margin-top:10px">${isHost ? '<button class="primary" data-act="rematch">เล่นอีกครั้ง (กลับไปเลือกทีม)</button>' : '<span class="muted">รอเจ้าของห้องเริ่มเกมใหม่…</span>'}</div>`;
+      <div class="row" style="margin-top:10px">${isHost ? '<button class="primary" data-act="rematch">เล่นอีกครั้ง (กลับห้องรอ)</button>' : '<span class="muted">รอเจ้าของห้องเริ่มเกมใหม่…</span>'}</div>`;
   }
   if (V.phase === 'setup') return setupPanel();
 
   // ----- battle -----
   const shootSide = V.myTeam === V.shootingTeam;
-  let h = `<h3><span>${shootSide ? '🎯 ทีมคุณเป็นฝ่ายยิง' : '🛡️ ทีมคุณเป็นฝ่ายรับ'} <span class="badge">รอบ ${V.round}</span></span>${timerHTML()}</h3>`;
+  let h = `<h3><span>${shootSide ? '🎯 คุณเป็นฝ่ายยิง' : '🛡️ คุณเป็นฝ่ายรับ'} <span class="badge">รอบ ${V.round}</span></span>${timerHTML()}</h3>`;
   h += lastResultHTML();
 
   if (V.turnPhase === 'aim') {
     if (V.shooterId === V.me) h += shooterPanel();
     else if (shootSide) h += `<div class="banner info">${esc(nameOf(V.shooterId))} กำลังเล็งและเข้ารหัส…</div>
-      <p class="muted">ช่วยเพื่อนเลือกเป้าและคีย์ได้นะ — คีย์ที่ยังใช้ได้ดูที่แท็ก "คีย์ทีมเรา"</p>`;
-    else h += `<div class="banner info">${esc(nameOf(V.shooterId))} (ทีมตรงข้าม) กำลังเล็ง… เตรียมถอดรหัส!</div>
-      <p class="muted">คีย์ที่ทีมตรงข้ามถูกแบนไปแล้วตัดทิ้งได้เลย ช่วยให้เดาง่ายขึ้น</p>`;
+      <p class="muted">ช่วยเพื่อนเลือกเป้าและคีย์ได้นะ — คีย์ที่ยังใช้ได้ดูที่แท็ก "คีย์ของเรา"</p>`;
+    else h += `<div class="banner info">${esc(nameOf(V.shooterId))} (ฝ่ายตรงข้าม) กำลังเล็ง… เตรียมถอดรหัส!</div>
+      <p class="muted">คีย์ที่ฝ่ายตรงข้ามถูกแบนไปแล้วตัดทิ้งได้เลย ช่วยให้เดาง่ายขึ้น</p>`;
     return h;
   }
 
   if (shootSide) {
     const s = V.shot;
-    h += `<div class="row muted">${esc(nameOf(s.shooterId))} ยิงไปที่ <b class="mono">${cellName(...s.target)}</b> ด้วยคีย์ #${s.keyIdx + 1} → "${textOf(s.cipher)}"</div>`;
+    h += `<div class="row muted">${esc(nameOf(s.shooterId))} ยิงไปที่ <b class="mono">${cellName(...s.target)}</b> ด้วยคีย์ #${s.keyIdx + 1} → ${textOf(s.cipher)}</div>`;
     h += V.turnPhase === 'move'
-      ? `<div class="banner warn">ทีมตรงข้ามประกาศพิกัดถูก! คีย์ #${s.keyIdx + 1} ถูกแบน — กำลังขยับเรือหนี…</div>`
-      : `<div class="banner info">รอทีมตรงข้ามถอดรหัสและประกาศพิกัด… (ลองถอดไปแล้ว ${V.triesCount}/${ROLLS_PER_TURN} ครั้ง)</div>`;
+      ? `<div class="banner warn">ฝ่ายตรงข้ามประกาศพิกัดถูก! คีย์ #${s.keyIdx + 1} ถูกแบน — กำลังขยับเรือหนี…</div>`
+      : `<div class="banner info">รอฝ่ายตรงข้ามถอดรหัสและประกาศพิกัด… (ลองถอดไปแล้ว ${V.triesCount}/${ROLLS_PER_TURN} ครั้ง)</div>`;
     return h;
   }
   return h + (V.turnPhase === 'move' ? movePanel() : defendPanel());
@@ -886,13 +881,13 @@ function panelHTML() {
 
 function setupPanel() {
   let h = `<h3>เตรียมเกม</h3>`;
-  if (myTeamV().ready) return h + `<div class="banner info">ทีมเราพร้อมแล้ว — รอทีมตรงข้าม…</div>`;
+  if (myTeamV().ready) return h + `<div class="banner info">คุณพร้อมแล้ว — รอฝ่ายตรงข้าม…</div>`;
   if (!isCaptain()) return h + `<div class="banner info">รอกัปตัน ${esc(nameOf(V.captains[V.myTeam]))} เลือกคีย์และวางเรือ…</div>`;
   const n = Lc.setupKeys.length;
   h += stepBox(1, `เลือกคีย์ ${TEAM_KEYS} ชุดใช้ทั้งเกม (${n}/${TEAM_KEYS})`, n === TEAM_KEYS,
-    `<div class="muted">คลิกที่ <b>คลังคีย์ระบบ</b> — ทีมตรงข้ามจะไม่เห็นว่าเลือกอะไร ถ้าถูกแบนครบ ${TEAM_KEYS} ชุดจะแพ้</div>`);
+    `<div class="muted">คลิกที่ <b>คลังคีย์ระบบ</b> — ฝ่ายตรงข้ามจะไม่เห็นว่าเลือกอะไร ถ้าถูกแบนครบ ${TEAM_KEYS} ชุดจะแพ้</div>`);
   h += stepBox(2, 'วางเรือ', !!Lc.placeSel,
-    `<div class="muted">คลิกช่องบน <b>ทะเลทีมเรา</b> — ตำแหน่ง: <b class="mono">${Lc.placeSel ? cellName(...Lc.placeSel) : '—'}</b></div>`);
+    `<div class="muted">คลิกช่องบน <b>ทะเลของเรา</b> — ตำแหน่ง: <b class="mono">${Lc.placeSel ? cellName(...Lc.placeSel) : '—'}</b></div>`);
   h += `<div class="row" style="margin-top:12px"><button class="primary" data-act="setup" ${n === TEAM_KEYS && Lc.placeSel ? '' : 'disabled'}>ยืนยัน พร้อมรบ</button></div>`;
   return h;
 }
@@ -902,50 +897,50 @@ function shooterPanel() {
   const usable = mine.keys.filter(k => !mine.banned.includes(k));
   let h = '';
   h += stepBox(1, 'เลือกพิกัดเป้าหมาย', !!Lc.sel,
-    Lc.sel ? `<div class="muted">เป้า <b class="mono">${cellName(...Lc.sel)}</b> → ข้อความ "${textOf(Lc.sel)}" → P = [${Lc.sel.join(', ')}]</div>`
-           : `<div class="muted">คุณเป็นผู้ยิงรอบนี้ — คลิกช่องบน <b>ทะเลทีมตรงข้าม</b></div>`);
+    Lc.sel ? `<div class="muted">เป้า <b class="mono">${cellName(...Lc.sel)}</b> → P = ${textOf(Lc.sel)}</div>`
+           : `<div class="muted">คุณเป็นผู้ยิงรอบนี้ — คลิกช่องบน <b>ทะเลฝ่ายตรงข้าม</b></div>`);
   if (!Lc.sel) return h;
   h += stepBox(2, 'เลือกคีย์เข้ารหัส', Lc.keyIdx !== null,
     Lc.keyIdx !== null ? `<div class="muted">ใช้คีย์ #${Lc.keyIdx + 1}</div>`
-                       : `<div class="muted">คลิกคีย์ที่มีแท็ก "คีย์ทีมเรา" ในคลังคีย์ (ใช้ได้ ${usable.map(k => '#' + (k + 1)).join(', ')})</div>`);
+                       : `<div class="muted">คลิกคีย์ที่มีแท็ก "คีย์ของเรา" ในคลังคีย์ (ใช้ได้ ${usable.map(k => '#' + (k + 1)).join(', ')})</div>`);
   if (Lc.keyIdx === null) return h;
   const C = mul(KEY_TABLE[Lc.keyIdx].K, Lc.sel);
-  h += `<div class="row muted" style="margin-top:10px">รหัสลับที่จะส่ง: <b class="mono">"${textOf(C)}"</b></div>
+  h += `<div class="row muted" style="margin-top:10px">รหัสลับที่จะส่ง: <b class="mono">${textOf(C)}</b></div>
     <div class="row"><button class="primary" data-act="fire">🚀 ส่งรหัสลับ / ยิง!</button></div>`;
   return h;
 }
 
 function defendPanel() {
   const C = V.shot.cipher, open = myOpenTry();
-  let h = `<div class="row">รหัสลับจาก ${esc(nameOf(V.shot.shooterId))}: <b class="mono" style="font-size:20px;color:var(--warn)">"${textOf(C)}"</b> → C = [${C.join(', ')}]</div>`;
+  let h = `<div class="row">รหัสลับจาก ${esc(nameOf(V.shot.shooterId))}: <b class="mono" style="font-size:20px;color:var(--warn)">${textOf(C)}</b></div>`;
 
   // ลองถอดด้วยคีย์ที่สุ่มได้
   if (!open) {
     const left = ROLLS_PER_TURN - V.tries.length;
-    h += stepBox('🎲', `สุ่มคีย์มาลองถอด (ทีมใช้ไป ${V.tries.length}/${ROLLS_PER_TURN} ครั้ง)`, false,
-      `<div class="muted">${left ? `สุ่มจาก ${KEY_COUNT} คีย์ระบบ ไม่ซ้ำกับเพื่อน — เทิร์นนี้ทีมเหลืออีก ${left} ครั้ง` : 'ทีมใช้สิทธิ์ถอดครบแล้วในเทิร์นนี้'}</div>
+    h += stepBox('🎲', `สุ่มคีย์มาลองถอด (ใช้ไป ${V.tries.length}/${ROLLS_PER_TURN} ครั้ง)`, false,
+      `<div class="muted">${left ? `สุ่มจาก ${KEY_COUNT} คีย์ระบบ ไม่ซ้ำกัน — เทิร์นนี้เหลืออีก ${left} ครั้ง` : 'ใช้สิทธิ์ถอดครบแล้วในเทิร์นนี้'}</div>
        <div class="row"><button class="primary" data-act="roll" ${left ? '' : 'disabled'}>🎲 สุ่มคีย์</button></div>`);
   } else {
     const Ki = KEY_TABLE[open.keyIdx].Kinv, k = open.keyIdx;
-    h += stepBox('🔓', `ถอดด้วยคีย์ #${k + 1}: P = K⁻¹ · C mod 26`, false,
+    h += stepBox('🔓', `ถอดด้วยคีย์ #${k + 1}: P = K⁻¹ · C mod ${MOD}`, false,
       `<div class="eq">P = ${matHTML(Ki)} · ${vecHTML(C)} = <span class="mat c1"><input class="num" id="p1-${k}" inputmode="numeric"><input class="num" id="p2-${k}" inputmode="numeric"></span></div>
        <div class="row"><button data-act="chkP">ตรวจคำตอบ</button><button class="small" data-act="revP">ดูวิธีทำ</button></div>` +
       (Lc.revealed[k] ? `<div class="explain">${esc(explainMul(Ki, C, 'K⁻¹', 'p'))}</div>` : ''));
   }
 
-  // ผลที่ทีมถอดได้ — กัปตันเลือก 1 คำตอบประกาศ
+  // ผลที่ถอดได้ — ฝ่ายรับเลือก 1 คำตอบประกาศ
   const rows = V.tries.map(t => {
     let res = '<span class="s-wait">กำลังคำนวณ…</span>';
-    if (t.P) res = inGrid(t.P) ? `<b class="mono">"${textOf(t.P)}" → ${cellName(...t.P)}</b>` : `<span class="s-bad">"${textOf(t.P)}" นอกกระดาน</span>`;
+    if (t.P) res = inGrid(t.P) ? `<b class="mono">${textOf(t.P)} → ${cellName(...t.P)}</b>` : `<span class="s-bad">${textOf(t.P)} นอกกระดาน</span>`;
     const btn = isCaptain() && myTeamV().announcesLeft > 0 && t.P && inGrid(t.P) ? `<button class="small primary" data-act="announce" data-key="${t.keyIdx}">📣 ประกาศ</button>` : '';
     return `<li><span>คีย์ #${t.keyIdx + 1} <span class="muted">(${esc(nameOf(t.pid))})</span></span><span>${res} ${btn}</span></li>`;
   }).join('');
-  h += `<div class="step"><div class="step-title">ผลถอดของทีม (กรอบเหลืองบนทะเลทีมเรา)</div>
+  h += `<div class="step"><div class="step-title">ผลถอด (กรอบเหลืองบนทะเลของเรา)</div>
     ${rows ? `<ul class="squad">${rows}</ul>` : '<p class="muted">ยังไม่มีใครถอด</p>'}
     <p class="muted">${isCaptain()
       ? (myTeamV().announcesLeft > 0
-        ? `คุณเป็นกัปตัน ⭐ — เลือก <b>1 คำตอบ</b> ประกาศ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES}) ถ้าถูก คีย์ผู้ยิงจะถูกแบนและขยับเรือได้ 1 ช่อง • ถ้าผิดหรือหมดเวลา ต้องรับระเบิดลูกนี้`
-        : `ทีมใช้สิทธิ์ประกาศครบ ${ANNOUNCES} ครั้งแล้ว — ต้องรับระเบิดทุกลูก`)
+        ? `เลือก <b>1 คำตอบ</b> ประกาศ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES}) ถ้าถูก คีย์ผู้ยิงจะถูกแบนและขยับเรือได้ 1 ช่อง • ถ้าผิดหรือหมดเวลา ต้องรับระเบิดลูกนี้`
+        : `ใช้สิทธิ์ประกาศครบ ${ANNOUNCES} ครั้งแล้ว — ต้องรับระเบิดทุกลูก`)
       : `กัปตัน ⭐${esc(nameOf(V.captains[V.myTeam]))} จะเลือก 1 คำตอบประกาศ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES}) — ช่วยกันถอดให้ทัน!`}</p>
     ${isCaptain() ? '<div class="row"><button class="small" data-act="takeBomb">ไม่ประกาศ / รับระเบิดเลย</button></div>' : ''}</div>`;
   return h;
@@ -955,7 +950,7 @@ function movePanel() {
   let h = `<div class="banner ok">✔ ประกาศ ${cellName(...V.announced.P)} ถูกต้อง! คีย์ของผู้ยิงถูกแบนแล้ว</div>`;
   if (!isCaptain()) return h + `<p class="muted">กัปตัน ⭐${esc(nameOf(V.captains[V.myTeam]))} กำลังขยับเรือหนี…</p>`;
   return h + stepBox('🚢', 'ขยับเรือ 1 ช่อง (8 ทิศ) หรืออยู่ที่เดิม', false,
-    `<div class="muted">คลิกช่องที่ไฮไลต์บน <b>ทะเลทีมเรา</b> — หมดเวลาแล้วเรืออยู่ที่เดิม</div>
+    `<div class="muted">คลิกช่องที่ไฮไลต์บน <b>ทะเลของเรา</b> — หมดเวลาแล้วเรืออยู่ที่เดิม</div>
      <div class="row"><span>ไปที่: <b class="mono">${cellName(...(Lc.moveTo || myShip()))}</b></span>
      <button class="primary" data-act="move">ยืนยัน</button></div>`);
 }
@@ -984,10 +979,6 @@ $('#btnCopy').onclick = async () => {
   try { await navigator.clipboard.writeText(url); $('#copyMsg').textContent = 'คัดลอกแล้ว!'; }
   catch { $('#copyMsg').textContent = url; }
 };
-$('#teamCols').addEventListener('click', e => {
-  const b = e.target.closest('[data-team]');
-  if (b) act({ t: 'team', team: +b.dataset.team });
-});
 $('#roomActions').addEventListener('click', e => { if (e.target.id === 'btnStart') act({ t: 'start' }); });
 
 $('#boardMine').addEventListener('click', e => {
