@@ -54,7 +54,7 @@
     background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
   }
   input.num.ok { border-color: var(--ok); }
-  input.num.bad { border-color: var(--bad); }
+  input.num.bad, input.code.bad { border-color: var(--bad); }
   input.code, input.name {
     font: inherit; padding: 8px 10px; background: var(--bg); color: var(--text);
     border: 1px solid var(--line); border-radius: 8px;
@@ -162,7 +162,6 @@
   #log { max-height: 240px; overflow: auto; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
   #log div { padding: 4px 8px; border-radius: 6px; background: var(--bg); }
   #log .ok { color: var(--ok); } #log .bad { color: var(--bad); } #log .warn { color: var(--warn); }
-  .stats { font-size: 13px; color: var(--muted); }
 
   @media (max-width: 1080px) {
     #game { grid-template-columns: 1fr 1fr; }
@@ -192,8 +191,8 @@
         <li>คนหนึ่งสร้างห้อง แล้วส่งรหัสห้อง (หรือลิงก์) ให้เพื่อน ๆ — เชื่อมต่อแบบ Peer-to-Peer ไม่ต้องสมัครสมาชิก แค่ตั้งชื่อเล่น</li>
         <li>เล่น 2 คน: <b class="tA">ผู้เล่น A</b> และ <b class="tB">ผู้เล่น B</b> แต่ละคนมีเรือ 1 ลำ (<span id="hpText"></span> HP) บนทะเล 5×5 — ผลัดกันเป็น<b>ฝ่ายยิง</b>และ<b>ฝ่ายรับ</b></li>
         <li>ตอนเริ่มเกม แต่ละคนเลือก <b>คีย์ 3 ชุด</b> จากคลังคีย์ระบบ 10 ชุด (เป็นความลับ) ไว้ใช้ทั้งเกม แล้ววางเรือ</li>
-        <li><b>ฝ่ายยิง</b> เลือกพิกัด เลือก 1 ใน 3 คีย์ของตัวเอง แล้วส่งรหัสลับ C = K·P mod 5 (พิกัด A–E = 0–4, 1–5 = 0–4)</li>
-        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที สุ่มคีย์จากทั้ง 10 ชุดมาลองถอด P = K⁻¹·C mod 5 ได้ <b>เทิร์นละ 3 ครั้ง</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
+        <li><b>ฝ่ายยิง</b> เลือกพิกัด เลือก 1 ใน 3 คีย์ของตัวเอง แล้วส่งรหัสลับ C = K·P mod 5 เป็นตัวอักษร 2 ตัว (A=0, B=1, C=2, D=3, E=4)</li>
+        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที เลือกคีย์เองจากทั้ง 10 ชุด ใส่รหัสลับ (ตัวอักษร A–E) แล้วระบบคำนวณ P = K⁻¹·C mod 5 ให้ ลองได้ <b>เทิร์นละ 3 คีย์</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
         <li>ประกาศ<b>ถูก</b> → คีย์ที่ผู้ยิงใช้ถูก<b>แบน</b> และขยับเรือหนีได้ 1 ช่อง (8 ทิศ) • ประกาศผิด/หมดเวลา → รับระเบิดลูกนั้น เข้าก็เข้า พลาดก็พลาด</li>
         <li>ระบบประกาศ <b>เข้า / พลาด</b> ให้ทั้งสองฝ่ายทุกครั้ง • แพ้เมื่อ <b>ถูกแบนคีย์ครบ 3</b> หรือ <b>เรือจม</b></li>
       </ol>
@@ -245,7 +244,6 @@
     <div class="card keys-card">
       <h3 style="margin:0 0 8px;font-size:16px">คลังคีย์ระบบ 10 ชุด <span class="muted" style="font-weight:400">— คีย์เข้ารหัส K และคีย์ถอด K⁻¹ สำเร็จรูป</span></h3>
       <div class="keys" id="keyPool"></div>
-      <p class="stats" id="stats"></p>
     </div>
     <div class="side">
       <div class="card panel" id="panel"></div>
@@ -263,7 +261,7 @@ const N = 5;              // ทะเล 5x5 (A-E, 1-5)
 const MOD = 5;            // พิกัด 0-4 บนทะเล 5x5
 const MAX_HP = 3;         // ยิงเข้า 1 ครั้ง = −1
 const TEAM_KEYS = 3;      // คีย์ที่ผู้เล่นแต่ละคนเลือกใช้ทั้งเกม (ถูกแบนครบ = แพ้)
-const ROLLS_PER_TURN = 3; // ฝ่ายรับสุ่มคีย์มาลองถอดได้กี่ครั้งต่อเทิร์น
+const TRIES_PER_TURN = 3; // ฝ่ายรับเลือกคีย์มาลองถอดได้กี่คีย์ต่อเทิร์น
 const ANNOUNCES = 4;      // สิทธิ์ประกาศพิกัดของผู้เล่นแต่ละคนตลอดทั้งเกม (เทิร์นละไม่เกิน 1)
 const DECODE_TIME = 120;  // วินาที ให้ฝ่ายรับถอดรหัสและประกาศ
 const MOVE_TIME = 30;     // วินาที ให้ฝ่ายรับขยับเรือหลังประกาศถูก
@@ -285,7 +283,13 @@ function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 
 // ===== คณิตศาสตร์เมทริกซ์ (พอร์ตจาก matrix.py) =====
 const mul = (K, v) => [mod(K[0][0] * v[0] + K[0][1] * v[1]), mod(K[1][0] * v[0] + K[1][1] * v[1])];
-const textOf = v => `[${v[0]}, ${v[1]}]`;
+const textOf = v => L(v[0]) + L(v[1]);           // รหัสลับเป็นตัวอักษร A–E (A=0 … E=4)
+const vecText = v => `[${v[0]}, ${v[1]}]`;
+const CIPHER_RE = new RegExp(`^[A-${L(MOD - 1)}]{2}$`);
+function parseCipher(text) {
+  const t = String(text || '').replace(/\s/g, '').toUpperCase();
+  return CIPHER_RE.test(t) ? [t.charCodeAt(0) - 65, t.charCodeAt(1) - 65] : null;
+}
 
 // คลังคีย์ระบบ 10 ชุด พร้อมคีย์ถอด K⁻¹ (mod 5) ที่คำนวณไว้สำเร็จรูปแล้ว
 // K⁻¹ = det⁻¹ · [[d, −b], [−c, a]] mod 5 — ทุกคู่ตรวจแล้วว่า K·K⁻¹ ≡ I (mod 5)
@@ -305,7 +309,6 @@ const KEY_COUNT = KEY_TABLE.length;
 
 // ===== คำอธิบายวิธีทำ =====
 const matHTML = M => `<span class="mat c2">${M.flat().map(x => `<span>${x}</span>`).join('')}</span>`;
-const vecHTML = v => `<span class="mat c1">${v.map(x => `<span>${x}</span>`).join('')}</span>`;
 
 function explainMul(K, v, name, outName) {
   const r = mul(K, v);
@@ -416,31 +419,22 @@ function handleAction(pid, a) {
       G.shot = { shooterId: pid, target: a.target, keyIdx: a.keyIdx, cipher };
       G.turnPhase = 'defend';
       G.tries = [];
-      glog(`🎯 ${p.name} เล็ง ${cellName(...a.target)} ด้วยคีย์ #${a.keyIdx + 1} → ส่ง ${textOf(cipher)}`, '', p.team);
-      glog(`📨 ${p.name} ส่งรหัสลับ ${textOf(cipher)} มา — มีเวลา ${DECODE_TIME / 60} นาที!`, 'warn', 1 - p.team);
+      glog(`🎯 ${p.name} เล็ง ${cellName(...a.target)} ด้วยคีย์ #${a.keyIdx + 1} → ส่ง "${textOf(cipher)}"`, '', p.team);
+      glog(`📨 ${p.name} ส่งรหัสลับ "${textOf(cipher)}" มา — มีเวลา ${DECODE_TIME / 60} นาที!`, 'warn', 1 - p.team);
       startTimer(DECODE_TIME, () => {
         glog(`⏰ หมดเวลา — ผู้เล่น ${TEAM[defTeamNow()]} ไม่ได้ประกาศพิกัด ต้องรับระเบิดลูกนี้`, 'warn');
         resolveShot();
       });
       break;
     }
-    case 'roll': {
-      // สุ่มคีย์ที่ฝ่ายรับยังไม่เคยลองในรอบนี้ (คนละ 1 คีย์ที่ค้างอยู่)
-      if (!battle || G.turnPhase !== 'defend' || p.team !== defTeam) return;
-      if (G.tries.some(t => t.pid === pid && !t.P) || G.tries.length >= ROLLS_PER_TURN) return;
-      const left = [...Array(KEY_COUNT).keys()].filter(k => !G.tries.some(t => t.keyIdx === k));
-      if (!left.length) return;
-      const keyIdx = left[rnd(0, left.length - 1)];
-      G.tries.push({ pid, keyIdx, P: null });
-      glog(`🎲 ${p.name} สุ่มได้คีย์ #${keyIdx + 1} มาลองถอด`, '', p.team);
-      break;
-    }
-    case 'decoded': {
-      if (!battle || G.turnPhase !== 'defend') return;
-      const tr = G.tries.find(t => t.pid === pid && !t.P);
-      if (!tr) return;
-      tr.P = mul(KEY_TABLE[tr.keyIdx].Kinv, G.shot.cipher);
-      glog(`🔓 ${p.name} ถอดด้วยคีย์ #${tr.keyIdx + 1} ได้ ${textOf(tr.P)}` + (inGrid(tr.P) ? ` → พิกัด ${cellName(...tr.P)}` : ' → นอกกระดาน'), '', p.team);
+    case 'try': {
+      // ฝ่ายรับเลือกคีย์เองและใส่รหัสลับที่ได้รับ — ระบบคำนวณ P = K⁻¹·C ให้
+      if (!battle || G.turnPhase !== 'defend' || p.team !== defTeam || G.tries.length >= TRIES_PER_TURN) return;
+      const C = parseCipher(a.text);
+      if (!C || !Number.isInteger(a.keyIdx) || a.keyIdx < 0 || a.keyIdx >= KEY_COUNT || G.tries.some(t => t.keyIdx === a.keyIdx)) return;
+      const P = mul(KEY_TABLE[a.keyIdx].Kinv, C);
+      G.tries.push({ pid, keyIdx: a.keyIdx, C, P });
+      glog(`🔓 ${p.name} ถอด "${textOf(C)}" ด้วยคีย์ #${a.keyIdx + 1} ได้ P = ${vecText(P)} → พิกัด ${cellName(...P)}`, '', p.team);
       break;
     }
     case 'announce': {
@@ -513,7 +507,6 @@ function playerLeft(pid) {
   conns.delete(pid);
   if (!p) return;
   G.players = G.players.filter(x => x.id !== pid);
-  G.tries = G.tries.filter(t => t.pid !== pid || t.P);
   glog(`${p.name} ออกจากห้อง`, 'bad');
   checkTeamsAlive();
   broadcast();
@@ -658,8 +651,7 @@ function joinRoom(attempt = 1) {
 //  ฝั่งหน้าจอ (ทุกคนรวม host) — วาดจาก view V + สถานะเฉพาะเครื่อง Lc
 // =====================================================================
 let V = null;
-const Lc = { stamp: '', setupKeys: [], placeSel: null, sel: null, keyIdx: null, revealed: {}, moveTo: null, deadline: 0 };
-const stats = { solved: 0, total: 0 };
+const Lc = { stamp: '', setupKeys: [], placeSel: null, sel: null, keyIdx: null, moveTo: null, deadline: 0 };
 
 function applyView(v) {
   V = v;
@@ -667,7 +659,7 @@ function applyView(v) {
   const stamp = `${v.phase}|${v.round}|${v.turnPhase}`;
   if (stamp !== Lc.stamp) {
     const keepSetup = v.phase === 'setup' && Lc.stamp.startsWith('setup');
-    Object.assign(Lc, { stamp, sel: null, keyIdx: null, revealed: {}, moveTo: null });
+    Object.assign(Lc, { stamp, sel: null, keyIdx: null, moveTo: null });
     if (!keepSetup) Object.assign(Lc, { setupKeys: [], placeSel: null });
   }
   render();
@@ -681,7 +673,7 @@ const myTeamV = () => V.teams[V.myTeam];
 const myShip = () => myTeamV().ship;
 const battle = () => V.phase === 'battle';
 const iDefend = () => battle() && V.myTeam !== V.shootingTeam;
-const myOpenTry = () => V.tries.find(t => t.pid === V.me && !t.P);
+const canTry = () => iDefend() && V.turnPhase === 'defend' && V.tries.length < TRIES_PER_TURN;
 const canMoveShip = () => iDefend() && V.turnPhase === 'move' && isCaptain();
 const iSetup = () => V.phase === 'setup' && isCaptain() && !myTeamV().ready;
 const iAim = () => battle() && V.turnPhase === 'aim' && V.shooterId === V.me;
@@ -699,7 +691,6 @@ function render() {
   renderKeys();
   renderPanel();
   renderLog();
-  $('#stats').textContent = stats.total ? `คุณถอดรหัสถูกเอง ${stats.solved}/${stats.total} ครั้ง` : '';
 }
 
 function renderRoom() {
@@ -784,15 +775,15 @@ function renderKeys() {
   $('#keyPool').innerHTML = KEY_TABLE.map(({ K, Kinv }, i) => {
     const banned = [0, 1].filter(t => V.teams[t].banned.includes(i));
     const isOwn = ownKeys.includes(i);
-    const pickable = iSetup() || (iAim() && isOwn && !mine.banned.includes(i));
+    const pickable = iSetup() || (iAim() && isOwn && !mine.banned.includes(i)) || (canTry() && !triedBy[i]);
     const on = iSetup() ? isOwn
-      : iAim() ? Lc.keyIdx === i
-      : (V.shot && V.shot.keyIdx === i) || (myOpenTry() && myOpenTry().keyIdx === i);
+      : iAim() || canTry() ? Lc.keyIdx === i
+      : !!V.shot && V.shot.keyIdx === i;
     const tags = [];
     if (isOwn) tags.push(`<span class="tag own">คีย์ของเรา</span>`);
     banned.forEach(t => tags.push(`<span class="tag ban">แบน: ผู้เล่น ${TEAM[t]}</span>`));
     const tr = triedBy[i];
-    if (tr) tags.push(`<span class="tag tried">${tr.P ? (inGrid(tr.P) ? 'ได้ ' + cellName(...tr.P) : 'นอกกระดาน') : 'กำลังลอง'}</span>`);
+    if (tr) tags.push(`<span class="tag tried">ได้ ${cellName(...tr.P)}</span>`);
     return `<div class="key ${pickable ? 'pick' : ''} ${on ? 'on' : ''} ${banned.length ? 'banned' : ''}" data-key="${i}">
       <small>คีย์ #${i + 1}</small>
       <div class="kpair"><span>K</span>${matHTML(K)}<span>K⁻¹</span>${matHTML(Kinv)}</div>
@@ -870,10 +861,10 @@ function panelHTML() {
 
   if (shootSide) {
     const s = V.shot;
-    h += `<div class="row muted">${esc(nameOf(s.shooterId))} ยิงไปที่ <b class="mono">${cellName(...s.target)}</b> ด้วยคีย์ #${s.keyIdx + 1} → ${textOf(s.cipher)}</div>`;
+    h += `<div class="row muted">${esc(nameOf(s.shooterId))} ยิงไปที่ <b class="mono">${cellName(...s.target)}</b> ด้วยคีย์ #${s.keyIdx + 1} → "${textOf(s.cipher)}"</div>`;
     h += V.turnPhase === 'move'
       ? `<div class="banner warn">ฝ่ายตรงข้ามประกาศพิกัดถูก! คีย์ #${s.keyIdx + 1} ถูกแบน — กำลังขยับเรือหนี…</div>`
-      : `<div class="banner info">รอฝ่ายตรงข้ามถอดรหัสและประกาศพิกัด… (ลองถอดไปแล้ว ${V.triesCount}/${ROLLS_PER_TURN} ครั้ง)</div>`;
+      : `<div class="banner info">รอฝ่ายตรงข้ามถอดรหัสและประกาศพิกัด… (ลองถอดไปแล้ว ${V.triesCount}/${TRIES_PER_TURN} คีย์)</div>`;
     return h;
   }
   return h + (V.turnPhase === 'move' ? movePanel() : defendPanel());
@@ -897,7 +888,7 @@ function shooterPanel() {
   const usable = mine.keys.filter(k => !mine.banned.includes(k));
   let h = '';
   h += stepBox(1, 'เลือกพิกัดเป้าหมาย', !!Lc.sel,
-    Lc.sel ? `<div class="muted">เป้า <b class="mono">${cellName(...Lc.sel)}</b> → P = ${textOf(Lc.sel)}</div>`
+    Lc.sel ? `<div class="muted">เป้า <b class="mono">${cellName(...Lc.sel)}</b> → P = ${vecText(Lc.sel)}</div>`
            : `<div class="muted">คุณเป็นผู้ยิงรอบนี้ — คลิกช่องบน <b>ทะเลฝ่ายตรงข้าม</b></div>`);
   if (!Lc.sel) return h;
   h += stepBox(2, 'เลือกคีย์เข้ารหัส', Lc.keyIdx !== null,
@@ -905,38 +896,36 @@ function shooterPanel() {
                        : `<div class="muted">คลิกคีย์ที่มีแท็ก "คีย์ของเรา" ในคลังคีย์ (ใช้ได้ ${usable.map(k => '#' + (k + 1)).join(', ')})</div>`);
   if (Lc.keyIdx === null) return h;
   const C = mul(KEY_TABLE[Lc.keyIdx].K, Lc.sel);
-  h += `<div class="row muted" style="margin-top:10px">รหัสลับที่จะส่ง: <b class="mono">${textOf(C)}</b></div>
+  h += `<div class="row muted" style="margin-top:10px">รหัสลับที่จะส่ง: <b class="mono">"${textOf(C)}"</b> <span>(C = ${vecText(C)})</span></div>
     <div class="row"><button class="primary" data-act="fire">🚀 ส่งรหัสลับ / ยิง!</button></div>`;
   return h;
 }
 
 function defendPanel() {
-  const C = V.shot.cipher, open = myOpenTry();
-  let h = `<div class="row">รหัสลับจาก ${esc(nameOf(V.shot.shooterId))}: <b class="mono" style="font-size:20px;color:var(--warn)">${textOf(C)}</b></div>`;
+  const C = V.shot.cipher, left = TRIES_PER_TURN - V.tries.length, k = Lc.keyIdx;
+  let h = `<div class="row">รหัสลับจาก ${esc(nameOf(V.shot.shooterId))}: <b class="mono" style="font-size:20px;color:var(--warn)">"${textOf(C)}"</b></div>`;
 
-  // ลองถอดด้วยคีย์ที่สุ่มได้
-  if (!open) {
-    const left = ROLLS_PER_TURN - V.tries.length;
-    h += stepBox('🎲', `สุ่มคีย์มาลองถอด (ใช้ไป ${V.tries.length}/${ROLLS_PER_TURN} ครั้ง)`, false,
-      `<div class="muted">${left ? `สุ่มจาก ${KEY_COUNT} คีย์ระบบ ไม่ซ้ำกัน — เทิร์นนี้เหลืออีก ${left} ครั้ง` : 'ใช้สิทธิ์ถอดครบแล้วในเทิร์นนี้'}</div>
-       <div class="row"><button class="primary" data-act="roll" ${left ? '' : 'disabled'}>🎲 สุ่มคีย์</button></div>`);
+  // เลือกคีย์เองจากทั้ง 10 ชุด แล้วใส่รหัสลับ — ระบบคำนวณให้
+  if (left > 0) {
+    h += stepBox(1, `เลือกคีย์ถอด (ลองได้อีก ${left}/${TRIES_PER_TURN} คีย์)`, k !== null,
+      `<div class="muted">${k !== null ? `ใช้คีย์ #${k + 1}` : `คลิกคีย์ใดก็ได้ใน <b>คลังคีย์ระบบ</b> ${KEY_COUNT} ชุด`}</div>`);
+    h += stepBox(2, 'ใส่รหัสลับที่ได้รับ', false,
+      `<div class="row"><input class="code" id="cipherIn" maxlength="2" placeholder="เช่น AB" autocomplete="off">
+       <button class="primary" data-act="try" ${k !== null ? '' : 'disabled'}>🔓 ถอดรหัส</button></div>
+       <div class="muted">ระบบคำนวณ P = K⁻¹ · C mod ${MOD} ให้อัตโนมัติ</div>`);
   } else {
-    const Ki = KEY_TABLE[open.keyIdx].Kinv, k = open.keyIdx;
-    h += stepBox('🔓', `ถอดด้วยคีย์ #${k + 1}: P = K⁻¹ · C mod ${MOD}`, false,
-      `<div class="eq">P = ${matHTML(Ki)} · ${vecHTML(C)} = <span class="mat c1"><input class="num" id="p1-${k}" inputmode="numeric"><input class="num" id="p2-${k}" inputmode="numeric"></span></div>
-       <div class="row"><button data-act="chkP">ตรวจคำตอบ</button><button class="small" data-act="revP">ดูวิธีทำ</button></div>` +
-      (Lc.revealed[k] ? `<div class="explain">${esc(explainMul(Ki, C, 'K⁻¹', 'p'))}</div>` : ''));
+    h += `<div class="banner info">ลองถอดครบ ${TRIES_PER_TURN} คีย์แล้วในเทิร์นนี้</div>`;
   }
 
   // ผลที่ถอดได้ — ฝ่ายรับเลือก 1 คำตอบประกาศ
   const rows = V.tries.map(t => {
-    let res = '<span class="s-wait">กำลังคำนวณ…</span>';
-    if (t.P) res = inGrid(t.P) ? `<b class="mono">${textOf(t.P)} → ${cellName(...t.P)}</b>` : `<span class="s-bad">${textOf(t.P)} นอกกระดาน</span>`;
-    const btn = isCaptain() && myTeamV().announcesLeft > 0 && t.P && inGrid(t.P) ? `<button class="small primary" data-act="announce" data-key="${t.keyIdx}">📣 ประกาศ</button>` : '';
-    return `<li><span>คีย์ #${t.keyIdx + 1} <span class="muted">(${esc(nameOf(t.pid))})</span></span><span>${res} ${btn}</span></li>`;
+    const res = `<b class="mono">"${textOf(t.C)}" → P = ${vecText(t.P)} → ${cellName(...t.P)}</b>`;
+    const how = `<details style="width:100%"><summary class="muted">วิธีคำนวณ</summary><div class="explain">${esc(explainMul(KEY_TABLE[t.keyIdx].Kinv, t.C, 'K⁻¹', 'p'))}</div></details>`;
+    const btn = isCaptain() && myTeamV().announcesLeft > 0 ? `<button class="small primary" data-act="announce" data-key="${t.keyIdx}">📣 ประกาศ</button>` : '';
+    return `<li><span>คีย์ #${t.keyIdx + 1} <span class="muted">(${esc(nameOf(t.pid))})</span></span><span>${res} ${btn}</span>${how}</li>`;
   }).join('');
   h += `<div class="step"><div class="step-title">ผลถอด (กรอบเหลืองบนทะเลของเรา)</div>
-    ${rows ? `<ul class="squad">${rows}</ul>` : '<p class="muted">ยังไม่มีใครถอด</p>'}
+    ${rows ? `<ul class="squad">${rows}</ul>` : '<p class="muted">ยังไม่ได้ลองถอด</p>'}
     <p class="muted">${isCaptain()
       ? (myTeamV().announcesLeft > 0
         ? `เลือก <b>1 คำตอบ</b> ประกาศ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES}) ถ้าถูก คีย์ผู้ยิงจะถูกแบนและขยับเรือได้ 1 ช่อง • ถ้าผิดหรือหมดเวลา ต้องรับระเบิดลูกนี้`
@@ -953,20 +942,6 @@ function movePanel() {
     `<div class="muted">คลิกช่องที่ไฮไลต์บน <b>ทะเลของเรา</b> — หมดเวลาแล้วเรืออยู่ที่เดิม</div>
      <div class="row"><span>ไปที่: <b class="mono">${cellName(...(Lc.moveTo || myShip()))}</b></span>
      <button class="primary" data-act="move">ยืนยัน</button></div>`);
-}
-
-// ===== การตรวจคำตอบ =====
-function checkInputs(ids, expected) {
-  let all = true;
-  ids.forEach((id, i) => {
-    const el = document.getElementById(id);
-    const v = el.value.trim() === '' ? NaN : Number(el.value);
-    const ok = v === expected[i];
-    el.classList.toggle('ok', ok);
-    el.classList.toggle('bad', !ok);
-    if (!ok) all = false;
-  });
-  return all;
 }
 
 // ===== อีเวนต์ =====
@@ -1015,19 +990,11 @@ $('#panel').addEventListener('click', e => {
       btn.disabled = true; act({ t: 'setup', keys: Lc.setupKeys, pos: Lc.placeSel }); return;
     case 'fire':
       btn.disabled = true; act({ t: 'fire', target: Lc.sel, keyIdx: Lc.keyIdx }); return;
-    case 'roll':
-      btn.disabled = true; act({ t: 'roll' }); return;
-    case 'revP':
-      Lc.revealed[myOpenTry().keyIdx] = true; render(); return;
-    case 'chkP': {
-      const k = myOpenTry().keyIdx;
-      if (checkInputs([`p1-${k}`, `p2-${k}`], mul(KEY_TABLE[k].Kinv, V.shot.cipher))) {
-        stats.total++;
-        if (!Lc.revealed[k]) stats.solved++;
-        btn.disabled = true;
-        act({ t: 'decoded' });
-      }
-      return;
+    case 'try': {
+      const input = $('#cipherIn');
+      if (!parseCipher(input.value)) { input.classList.add('bad'); input.focus(); return; }
+      input.classList.remove('bad');
+      btn.disabled = true; act({ t: 'try', keyIdx: Lc.keyIdx, text: input.value }); Lc.keyIdx = null; return;
     }
     case 'announce':
       if (!confirm(`ประกาศพิกัดจากคีย์ #${+btn.dataset.key + 1}? ประกาศได้ครั้งเดียวต่อรอบ`)) return;
@@ -1044,10 +1011,10 @@ $('#panel').addEventListener('click', e => {
   }
 });
 
-// Enter ในช่องคำตอบ = กดตรวจคำตอบ
+// Enter ในช่องรหัสลับ = กดถอดรหัส
 $('#panel').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
-  const btn = e.target.closest('.step').querySelector('[data-act="chkP"]');
+  const btn = e.target.closest('.step').querySelector('[data-act="try"]');
   if (btn) btn.click();
 });
 
