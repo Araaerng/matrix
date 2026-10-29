@@ -54,7 +54,7 @@
     background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
   }
   input.num.ok { border-color: var(--ok); }
-  input.num.bad, input.code.bad { border-color: var(--bad); }
+  input.num.bad { border-color: var(--bad); }
   input.code, input.name {
     font: inherit; padding: 8px 10px; background: var(--bg); color: var(--text);
     border: 1px solid var(--line); border-radius: 8px;
@@ -87,6 +87,11 @@
   .hp { display: flex; gap: 4px; align-items: center; }
   .hp i { width: 14px; height: 14px; border-radius: 3px; background: var(--ok); display: inline-block; }
   .hp i.lost { background: #3b2330; }
+  .overlay { position: fixed; inset: 0; background: rgba(4, 10, 20, .75); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .win-card { background: var(--panel); border: 2px solid var(--ok); border-radius: 16px; padding: 28px 24px; text-align: center; max-width: 420px; width: 100%; }
+  .win-card .trophy { font-size: 56px; line-height: 1; }
+  .win-card h2 { margin: 12px 0 4px; font-size: 28px; }
+  .win-card p { margin: 6px 0; }
   .board { display: grid; grid-template-columns: 24px repeat(5, 1fr); gap: 4px; }
   .board .lbl { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; font-family: "JetBrains Mono", monospace; }
   .cell {
@@ -189,12 +194,12 @@
       <h2>วิธีเล่น</h2>
       <ol>
         <li>คนหนึ่งสร้างห้อง แล้วส่งรหัสห้อง (หรือลิงก์) ให้เพื่อน ๆ — เชื่อมต่อแบบ Peer-to-Peer ไม่ต้องสมัครสมาชิก แค่ตั้งชื่อเล่น</li>
-        <li>เล่น 2 คน: <b class="tA">ผู้เล่น A</b> และ <b class="tB">ผู้เล่น B</b> แต่ละคนมีเรือ 1 ลำ (<span id="hpText"></span> HP) บนทะเล 5×5 — ผลัดกันเป็น<b>ฝ่ายยิง</b>และ<b>ฝ่ายรับ</b></li>
-        <li>ตอนเริ่มเกม แต่ละคนเลือก <b>คีย์ 3 ชุด</b> จากคลังคีย์ระบบ 10 ชุด (เป็นความลับ) ไว้ใช้ทั้งเกม แล้ววางเรือ</li>
+        <li>เล่น 2 คน: <b class="tA">ผู้เล่น A</b> และ <b class="tB">ผู้เล่น B</b> แต่ละคนมีเรือ <b>3 ลำ</b> (ลำละ 1 ช่อง วางตรงไหนก็ได้) บนทะเล 5×5 — ผลัดกันเป็น<b>ฝ่ายยิง</b>และ<b>ฝ่ายรับ</b></li>
+        <li>ตอนเริ่มเกม แต่ละคนเลือก <b>คีย์ 3 ชุด</b> จากคลังคีย์ระบบ 10 ชุด (เป็นความลับ) ไว้ใช้ทั้งเกม แล้ววางเรือ 3 ลำ</li>
         <li><b>ฝ่ายยิง</b> เลือกพิกัด เลือก 1 ใน 3 คีย์ของตัวเอง แล้วส่งรหัสลับ C = K·P mod 5 เป็นตัวอักษร 2 ตัว (A=0, B=1, C=2, D=3, E=4)</li>
-        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที เลือกคีย์เองจากทั้ง 10 ชุด ใส่รหัสลับ (ตัวอักษร A–E) แล้วระบบคำนวณ P = K⁻¹·C mod 5 ให้ ลองได้ <b>เทิร์นละ 3 คีย์</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
-        <li>ประกาศ<b>ถูก</b> → คีย์ที่ผู้ยิงใช้ถูก<b>แบน</b> และขยับเรือหนีได้ 1 ช่อง (8 ทิศ) • ประกาศผิด/หมดเวลา → รับระเบิดลูกนั้น เข้าก็เข้า พลาดก็พลาด</li>
-        <li>ระบบประกาศ <b>เข้า / พลาด</b> ให้ทั้งสองฝ่ายทุกครั้ง • แพ้เมื่อ <b>ถูกแบนคีย์ครบ 3</b> หรือ <b>เรือจม</b></li>
+        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที เลือกคีย์เองจากทั้ง 10 ชุด แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง ระบบคำนวณ P = K⁻¹·C mod 5 ให้ ลองได้ <b>เทิร์นละ 3 คีย์</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
+        <li>ประกาศ<b>ถูก</b> → คีย์ที่ผู้ยิงใช้ถูก<b>แบน</b> และขยับเรือ 1 ลำหนีได้ 1 ช่อง (8 ทิศ) • ประกาศผิด/หมดเวลา → รับระเบิดลูกนั้น เข้าก็เข้า พลาดก็พลาด</li>
+        <li>ระบบประกาศ <b>เข้า / พลาด</b> ให้ทั้งสองฝ่ายทุกครั้ง • ยิงโดนลำไหนลำนั้นจม • แพ้เมื่อ <b>ถูกแบนคีย์ครบ 3</b> หรือ <b>เรือจมครบ 3 ลำ</b></li>
       </ol>
     </div>
     <div class="card wide">
@@ -229,6 +234,9 @@
     <div class="row" id="roomActions"></div>
   </section>
 
+  <!-- ===== ประกาศผู้ชนะ ===== -->
+  <div id="winOverlay" class="overlay hidden"></div>
+
   <!-- ===== เกม ===== -->
   <section id="game" class="hidden">
     <div class="card board-wrap">
@@ -259,7 +267,7 @@
 // ===== ค่าคงที่ของเกม =====
 const N = 5;              // ทะเล 5x5 (A-E, 1-5)
 const MOD = 5;            // พิกัด 0-4 บนทะเล 5x5
-const MAX_HP = 3;         // ยิงเข้า 1 ครั้ง = −1
+const SHIPS = 3;          // เรือ 3 ลำ ลำละ 1 ช่อง — ยิงโดน 1 ครั้ง = จม 1 ลำ
 const TEAM_KEYS = 3;      // คีย์ที่ผู้เล่นแต่ละคนเลือกใช้ทั้งเกม (ถูกแบนครบ = แพ้)
 const TRIES_PER_TURN = 3; // ฝ่ายรับเลือกคีย์มาลองถอดได้กี่คีย์ต่อเทิร์น
 const ANNOUNCES = 4;      // สิทธิ์ประกาศพิกัดของผู้เล่นแต่ละคนตลอดทั้งเกม (เทิร์นละไม่เกิน 1)
@@ -285,11 +293,7 @@ function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 const mul = (K, v) => [mod(K[0][0] * v[0] + K[0][1] * v[1]), mod(K[1][0] * v[0] + K[1][1] * v[1])];
 const textOf = v => L(v[0]) + L(v[1]);           // รหัสลับเป็นตัวอักษร A–E (A=0 … E=4)
 const vecText = v => `[${v[0]}, ${v[1]}]`;
-const CIPHER_RE = new RegExp(`^[A-${L(MOD - 1)}]{2}$`);
-function parseCipher(text) {
-  const t = String(text || '').replace(/\s/g, '').toUpperCase();
-  return CIPHER_RE.test(t) ? [t.charCodeAt(0) - 65, t.charCodeAt(1) - 65] : null;
-}
+const validVec = v => Array.isArray(v) && v.length === 2 && v.every(x => Number.isInteger(x) && x >= 0 && x < MOD);
 
 // คลังคีย์ระบบ 10 ชุด พร้อมคีย์ถอด K⁻¹ (mod 5) ที่คำนวณไว้สำเร็จรูปแล้ว
 // K⁻¹ = det⁻¹ · [[d, −b], [−c, a]] mod 5 — ทุกคู่ตรวจแล้วว่า K·K⁻¹ ≡ I (mod 5)
@@ -328,13 +332,13 @@ const conns = new Map();      // peerId -> DataConnection (host)
 const HOST_ID = 'host';
 let hostTimer = null;
 
-const mkTeam = () => ({ ship: null, hp: MAX_HP, shotCount: 0, keys: null, banned: [], announcesLeft: ANNOUNCES });
+const mkTeam = () => ({ ships: null, hp: SHIPS, shotCount: 0, keys: null, banned: [], announcesLeft: ANNOUNCES });
 function freshRound() {
   return { turnPhase: null, shot: null, tries: [], announced: null, deadline: 0 };
 }
 function newGame() {
   G = { phase: 'lobby', round: 1, players: [], teams: [mkTeam(), mkTeam()], ...freshRound(),
-        history: [], lastResult: null, winner: null, reason: '', log: [] };
+        history: [], lastResult: null, winner: null, winnerName: '', reason: '', log: [] };
 }
 const members = t => G.players.filter(p => p.team === t);
 const captainOf = t => (members(t)[0] || {}).id || null;
@@ -365,7 +369,8 @@ function stopTimer() { clearTimeout(hostTimer); hostTimer = null; G.deadline = 0
 function endGame(winner, reason) {
   stopTimer();
   G.phase = 'over'; G.winner = winner; G.reason = reason;
-  glog(`🏆 ผู้เล่น ${TEAM[winner]} ชนะ! (${reason})`, 'ok');
+  G.winnerName = members(winner).map(p => p.name).join(', ');
+  glog(`🏆 ${G.winnerName} (ผู้เล่น ${TEAM[winner]}) ชนะ! (${reason})`, 'ok');
 }
 
 function startTurn() {
@@ -405,8 +410,10 @@ function handleAction(pid, a) {
       const team = G.teams[p.team];
       if (G.phase !== 'setup' || captainOf(p.team) !== pid || team.keys) return;
       const keys = Array.isArray(a.keys) ? [...new Set(a.keys)] : [];
-      if (keys.length !== TEAM_KEYS || !keys.every(k => Number.isInteger(k) && k >= 0 && k < KEY_COUNT) || !validPos(a.pos)) return;
-      team.keys = keys; team.ship = a.pos;
+      const ships = Array.isArray(a.ships) ? a.ships : [];
+      if (keys.length !== TEAM_KEYS || !keys.every(k => Number.isInteger(k) && k >= 0 && k < KEY_COUNT)) return;
+      if (ships.length !== SHIPS || !ships.every(validPos) || ships.some((p1, i) => ships.findIndex(p2 => samePos(p1, p2)) !== i)) return;
+      team.keys = keys; team.ships = ships.map(pos => ({ pos, sunk: false }));
       glog(`ผู้เล่น ${TEAM[p.team]} เลือกคีย์และวางเรือเรียบร้อย`);
       if (G.teams.every(t => t.keys)) { G.phase = 'battle'; glog('⚔️ เริ่มการรบ!', 'ok'); startTurn(); }
       break;
@@ -430,11 +437,11 @@ function handleAction(pid, a) {
     case 'try': {
       // ฝ่ายรับเลือกคีย์เองและใส่รหัสลับที่ได้รับ — ระบบคำนวณ P = K⁻¹·C ให้
       if (!battle || G.turnPhase !== 'defend' || p.team !== defTeam || G.tries.length >= TRIES_PER_TURN) return;
-      const C = parseCipher(a.text);
-      if (!C || !Number.isInteger(a.keyIdx) || a.keyIdx < 0 || a.keyIdx >= KEY_COUNT || G.tries.some(t => t.keyIdx === a.keyIdx)) return;
+      const C = a.C;
+      if (!validVec(C) || !Number.isInteger(a.keyIdx) || a.keyIdx < 0 || a.keyIdx >= KEY_COUNT || G.tries.some(t => t.keyIdx === a.keyIdx)) return;
       const P = mul(KEY_TABLE[a.keyIdx].Kinv, C);
       G.tries.push({ pid, keyIdx: a.keyIdx, C, P });
-      glog(`🔓 ${p.name} ถอด "${textOf(C)}" ด้วยคีย์ #${a.keyIdx + 1} ได้ P = ${vecText(P)} → พิกัด ${cellName(...P)}`, '', p.team);
+      glog(`🔓 ${p.name} ถอด C = ${vecText(C)} ด้วยคีย์ #${a.keyIdx + 1} ได้ P = ${vecText(P)} → พิกัด ${cellName(...P)}`, '', p.team);
       break;
     }
     case 'announce': {
@@ -464,18 +471,21 @@ function handleAction(pid, a) {
       resolveShot();
       break;
     case 'move': {
-      if (!battle || G.turnPhase !== 'move' || captainOf(defTeam) !== pid || !validPos(a.pos)) return;
+      if (!battle || G.turnPhase !== 'move' || captainOf(defTeam) !== pid) return;
       const team = G.teams[defTeam];
-      if (king(a.pos, team.ship) > 1) return;
-      if (!samePos(a.pos, team.ship)) glog(`🚢 ขยับเรือ 1 ช่อง`, '', defTeam);
-      team.ship = a.pos;
+      if (a.idx != null) {   // ไม่ส่ง idx = ไม่ขยับ
+        const ship = team.ships[a.idx];
+        if (!ship || ship.sunk || !validPos(a.pos) || king(a.pos, ship.pos) !== 1 || team.ships.some(sh => samePos(sh.pos, a.pos))) return;
+        glog(`🚢 ขยับเรือจาก ${cellName(...ship.pos)} ไป ${cellName(...a.pos)}`, '', defTeam);
+        ship.pos = a.pos;
+      }
       resolveShot();
       break;
     }
     case 'rematch':
       if (pid !== HOST_ID || G.phase !== 'over') return;
       Object.assign(G, { phase: 'lobby', round: 1, teams: [mkTeam(), mkTeam()], ...freshRound(),
-        history: [], lastResult: null, winner: null, reason: '', log: [] });
+        history: [], lastResult: null, winner: null, winnerName: '', reason: '', log: [] });
       glog('กลับสู่ห้องรอ — กดเริ่มเกมใหม่ได้เลย');
       break;
     default:
@@ -490,14 +500,15 @@ function resolveShot() {
   stopTimer();
   const st = shootingTeam(), dt = 1 - st, team = G.teams[dt];
   const [tr, tc] = G.shot.target;
-  const hit = samePos(G.shot.target, team.ship);
-  if (hit) team.hp = Math.max(0, team.hp - 1);
+  const ship = team.ships.find(sh => !sh.sunk && samePos(sh.pos, G.shot.target));
+  const hit = !!ship;
+  if (hit) { ship.sunk = true; team.hp--; }
   G.history.push({ by: st, r: tr, c: tc, hit });
   G.lastResult = { round: G.round, by: st, target: G.shot.target, hit, announced: G.announced };
-  glog(hit ? `💥 เข้า! ผู้เล่น ${TEAM[st]} ยิงโดนเรือผู้เล่น ${TEAM[dt]} ที่ ${cellName(tr, tc)} (HP เหลือ ${team.hp})`
+  glog(hit ? `💥 เข้า! ผู้เล่น ${TEAM[st]} ยิงโดนเรือผู้เล่น ${TEAM[dt]} ที่ ${cellName(tr, tc)} — เรือจม 1 ลำ (เหลือ ${team.hp}/${SHIPS} ลำ)`
            : `🌊 พลาด! ผู้เล่น ${TEAM[st]} ยิงที่ ${cellName(tr, tc)} ไม่โดน`, hit ? 'bad' : '');
   G.teams[st].shotCount++;
-  if (team.hp <= 0) { endGame(st, `เรือผู้เล่น ${TEAM[dt]} จม`); return; }
+  if (team.hp <= 0) { endGame(st, `จมเรือผู้เล่น ${TEAM[dt]} ครบ ${SHIPS} ลำ`); return; }
   G.round++;
   startTurn();
 }
@@ -524,7 +535,7 @@ function view(pid) {
     players: G.players, captains: [captainOf(0), captainOf(1)],
     teams: G.teams.map((t, i) => ({
       hp: t.hp, ready: !!t.keys, banned: t.banned, announcesLeft: t.announcesLeft,
-      ship: i === myTeam ? t.ship : null, keys: i === myTeam ? t.keys : null,
+      ships: i === myTeam ? t.ships : null, keys: i === myTeam ? t.keys : null,
     })),
     turnPhase: battle ? G.turnPhase : null, shootingTeam: st, shooterId: battle ? shooterId() : null,
     shot: G.shot && battle ? (shootSide ? G.shot : { cipher: G.shot.cipher, shooterId: G.shot.shooterId }) : null,
@@ -532,7 +543,7 @@ function view(pid) {
     triesCount: G.tries.length,
     announced: G.announced,
     remain: G.deadline ? Math.max(0, G.deadline - Date.now()) : 0,
-    history: G.history, lastResult: G.lastResult, winner: G.winner, reason: G.reason,
+    history: G.history, lastResult: G.lastResult, winner: G.winner, winnerName: G.winnerName, reason: G.reason,
     log: G.log.filter(e => e.vis === null || e.vis === myTeam).slice(-40),
   };
 }
@@ -651,7 +662,7 @@ function joinRoom(attempt = 1) {
 //  ฝั่งหน้าจอ (ทุกคนรวม host) — วาดจาก view V + สถานะเฉพาะเครื่อง Lc
 // =====================================================================
 let V = null;
-const Lc = { stamp: '', setupKeys: [], placeSel: null, sel: null, keyIdx: null, moveTo: null, deadline: 0 };
+const Lc = { stamp: '', setupKeys: [], placeShips: [], sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false, deadline: 0 };
 
 function applyView(v) {
   V = v;
@@ -659,8 +670,8 @@ function applyView(v) {
   const stamp = `${v.phase}|${v.round}|${v.turnPhase}`;
   if (stamp !== Lc.stamp) {
     const keepSetup = v.phase === 'setup' && Lc.stamp.startsWith('setup');
-    Object.assign(Lc, { stamp, sel: null, keyIdx: null, moveTo: null });
-    if (!keepSetup) Object.assign(Lc, { setupKeys: [], placeSel: null });
+    Object.assign(Lc, { stamp, sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false });
+    if (!keepSetup) Object.assign(Lc, { setupKeys: [], placeShips: [] });
   }
   render();
 }
@@ -670,7 +681,7 @@ const nameOf = id => (V.players.find(p => p.id === id) || {}).name || '?';
 const teamMembers = t => V.players.filter(p => p.team === t);
 const isCaptain = () => V.captains[V.myTeam] === V.me;
 const myTeamV = () => V.teams[V.myTeam];
-const myShip = () => myTeamV().ship;
+const myShips = () => myTeamV().ships || [];
 const battle = () => V.phase === 'battle';
 const iDefend = () => battle() && V.myTeam !== V.shootingTeam;
 const canTry = () => iDefend() && V.turnPhase === 'defend' && V.tries.length < TRIES_PER_TURN;
@@ -691,6 +702,7 @@ function render() {
   renderKeys();
   renderPanel();
   renderLog();
+  renderWin();
 }
 
 function renderRoom() {
@@ -709,7 +721,7 @@ function renderRoom() {
 
 function renderHeaders() {
   const my = V.myTeam, op = 1 - my;
-  const bar = t => Array.from({ length: MAX_HP }, (_, i) => `<i class="${i < V.teams[t].hp ? '' : 'lost'}"></i>`).join('') +
+  const bar = t => `<span class="badge" title="เรือที่เหลือ">🚢 ${V.teams[t].hp}/${SHIPS}</span>` +
     `<span class="badge" title="คีย์ที่ถูกแบน">🔒 ${V.teams[t].banned.length}/${TEAM_KEYS}</span>` +
     `<span class="badge" title="สิทธิ์ประกาศพิกัดที่เหลือ">📣 ${V.teams[t].announcesLeft}/${ANNOUNCES}</span>`;
   $('#mineTitle').innerHTML = `ทะเลของเรา (${teamTag(my)})`;
@@ -736,9 +748,10 @@ function boardHTML(cellFn) {
 }
 
 function renderBoards() {
-  const ship = myShip();
   const placing = iSetup();
   const moving = canMoveShip();
+  const ships = placing ? Lc.placeShips.map(pos => ({ pos, sunk: false })) : myShips();
+  const moveShip = moving && Lc.moveIdx !== null ? ships[Lc.moveIdx] : null;
   const cands = iDefend() ? V.tries.filter(t => t.P && inGrid(t.P)).map(t => t.P) : [];
   const announced = iDefend() && V.announced ? V.announced.P : null;
   $('#boardMine').innerHTML = boardHTML((r, c) => {
@@ -748,12 +761,17 @@ function renderBoards() {
     if (inc) cls.push(inc.hit ? 'hit' : 'miss');
     if (cands.some(t => samePos(t, [r, c]))) cls.push('cand');
     if (samePos(announced, [r, c])) cls.push('threat');
-    const inRange = moving && ship && king([r, c], ship) <= 1;
+    const idx = ships.findIndex(sh => samePos(sh.pos, [r, c]));
+    const ship = ships[idx];
+    const inRange = !!moveShip && idx < 0 && king([r, c], moveShip.pos) === 1;
     if (inRange) cls.push('range');
-    const shown = placing ? Lc.placeSel : ship;
     if (samePos(Lc.moveTo, [r, c])) { cls.push('sel'); content = '🚢'; }
-    else if (samePos(shown, [r, c])) content = Lc.moveTo ? '<span style="opacity:.35">🚢</span>' : '🚢';
-    return { cls, content, click: placing || inRange };
+    else if (ship && ship.sunk) content = '🔥';
+    else if (ship) {
+      if (idx === Lc.moveIdx) { if (Lc.moveTo) content = '<span style="opacity:.35">🚢</span>'; else { cls.push('sel'); content = '🚢'; } }
+      else content = '🚢';
+    }
+    return { cls, content, click: placing || inRange || (moving && !!ship && !ship.sunk) };
   });
   const aiming = iAim();
   const shownTarget = V.shot && V.shot.target ? V.shot.target : Lc.sel;
@@ -789,6 +807,23 @@ function renderKeys() {
       <div class="kpair"><span>K</span>${matHTML(K)}<span>K⁻¹</span>${matHTML(Kinv)}</div>
       <div class="tags">${tags.join('')}</div></div>`;
   }).join('');
+}
+
+// ประกาศผู้ชนะกลางจอเมื่อจบเกม
+function renderWin() {
+  const el = $('#winOverlay');
+  const show = V.phase === 'over' && !Lc.winClosed;
+  el.classList.toggle('hidden', !show);
+  if (!show) return;
+  const won = V.winner === V.myTeam;
+  el.innerHTML = `<div class="win-card">
+    <div class="trophy">🏆</div>
+    <h2>${esc(V.winnerName)} ชนะ!</h2>
+    <p>${teamTag(V.winner)}</p>
+    <p class="muted">${esc(V.reason)}</p>
+    <p>${won ? '🎉 ยินดีด้วย คุณชนะ!' : '💀 คุณแพ้ — ลองใหม่อีกครั้งนะ'}</p>
+    <div class="row" style="justify-content:center;margin-top:14px"><button class="primary" data-act="closeWin">ปิด</button></div>
+  </div>`;
 }
 
 function renderLog() {
@@ -839,7 +874,8 @@ function panelHTML() {
   }
   if (V.phase === 'over') {
     const won = V.winner === V.myTeam;
-    return `<div class="banner ${won ? 'ok' : 'bad'}">${won ? '🏆 คุณชนะ!' : '💀 คุณแพ้'} — ${esc(V.reason)}</div>
+    return `<div class="banner ${won ? 'ok' : 'bad'}">🏆 ${esc(V.winnerName)} (ผู้เล่น ${TEAM[V.winner]}) ชนะ! — ${won ? 'คุณชนะ' : 'คุณแพ้'}</div>
+      <p class="muted">${esc(V.reason)}</p>
       ${lastResultHTML()}
       <div class="row" style="margin-top:10px">${isHost ? '<button class="primary" data-act="rematch">เล่นอีกครั้ง (กลับห้องรอ)</button>' : '<span class="muted">รอเจ้าของห้องเริ่มเกมใหม่…</span>'}</div>`;
   }
@@ -877,9 +913,10 @@ function setupPanel() {
   const n = Lc.setupKeys.length;
   h += stepBox(1, `เลือกคีย์ ${TEAM_KEYS} ชุดใช้ทั้งเกม (${n}/${TEAM_KEYS})`, n === TEAM_KEYS,
     `<div class="muted">คลิกที่ <b>คลังคีย์ระบบ</b> — ฝ่ายตรงข้ามจะไม่เห็นว่าเลือกอะไร ถ้าถูกแบนครบ ${TEAM_KEYS} ชุดจะแพ้</div>`);
-  h += stepBox(2, 'วางเรือ', !!Lc.placeSel,
-    `<div class="muted">คลิกช่องบน <b>ทะเลของเรา</b> — ตำแหน่ง: <b class="mono">${Lc.placeSel ? cellName(...Lc.placeSel) : '—'}</b></div>`);
-  h += `<div class="row" style="margin-top:12px"><button class="primary" data-act="setup" ${n === TEAM_KEYS && Lc.placeSel ? '' : 'disabled'}>ยืนยัน พร้อมรบ</button></div>`;
+  const placed = Lc.placeShips.length;
+  h += stepBox(2, `วางเรือ ${SHIPS} ลำ (${placed}/${SHIPS})`, placed === SHIPS,
+    `<div class="muted">คลิกช่องใดก็ได้บน <b>ทะเลของเรา</b> (คลิกซ้ำเพื่อเอาออก) — ตำแหน่ง: <b class="mono">${placed ? Lc.placeShips.map(p => cellName(...p)).join(', ') : '—'}</b></div>`);
+  h += `<div class="row" style="margin-top:12px"><button class="primary" data-act="setup" ${n === TEAM_KEYS && placed === SHIPS ? '' : 'disabled'}>ยืนยัน พร้อมรบ</button></div>`;
   return h;
 }
 
@@ -909,8 +946,9 @@ function defendPanel() {
   if (left > 0) {
     h += stepBox(1, `เลือกคีย์ถอด (ลองได้อีก ${left}/${TRIES_PER_TURN} คีย์)`, k !== null,
       `<div class="muted">${k !== null ? `ใช้คีย์ #${k + 1}` : `คลิกคีย์ใดก็ได้ใน <b>คลังคีย์ระบบ</b> ${KEY_COUNT} ชุด`}</div>`);
-    h += stepBox(2, 'ใส่รหัสลับที่ได้รับ', false,
-      `<div class="row"><input class="code" id="cipherIn" maxlength="2" placeholder="เช่น AB" autocomplete="off">
+    h += stepBox(2, 'แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง', false,
+      `<div class="muted">${[...Array(MOD).keys()].map(i => `${L(i)} = ${i}`).join(' • ')}</div>
+       <div class="row"><span class="eq">C = <span class="mat c1"><input class="num" id="c1In" inputmode="numeric" maxlength="1" autocomplete="off"><input class="num" id="c2In" inputmode="numeric" maxlength="1" autocomplete="off"></span></span>
        <button class="primary" data-act="try" ${k !== null ? '' : 'disabled'}>🔓 ถอดรหัส</button></div>
        <div class="muted">ระบบคำนวณ P = K⁻¹ · C mod ${MOD} ให้อัตโนมัติ</div>`);
   } else {
@@ -919,7 +957,7 @@ function defendPanel() {
 
   // ผลที่ถอดได้ — ฝ่ายรับเลือก 1 คำตอบประกาศ
   const rows = V.tries.map(t => {
-    const res = `<b class="mono">"${textOf(t.C)}" → P = ${vecText(t.P)} → ${cellName(...t.P)}</b>`;
+    const res = `<b class="mono">C = ${vecText(t.C)} → P = ${vecText(t.P)} → ${cellName(...t.P)}</b>`;
     const how = `<details style="width:100%"><summary class="muted">วิธีคำนวณ</summary><div class="explain">${esc(explainMul(KEY_TABLE[t.keyIdx].Kinv, t.C, 'K⁻¹', 'p'))}</div></details>`;
     const btn = isCaptain() && myTeamV().announcesLeft > 0 ? `<button class="small primary" data-act="announce" data-key="${t.keyIdx}">📣 ประกาศ</button>` : '';
     return `<li><span>คีย์ #${t.keyIdx + 1} <span class="muted">(${esc(nameOf(t.pid))})</span></span><span>${res} ${btn}</span>${how}</li>`;
@@ -938,14 +976,14 @@ function defendPanel() {
 function movePanel() {
   let h = `<div class="banner ok">✔ ประกาศ ${cellName(...V.announced.P)} ถูกต้อง! คีย์ของผู้ยิงถูกแบนแล้ว</div>`;
   if (!isCaptain()) return h + `<p class="muted">กัปตัน ⭐${esc(nameOf(V.captains[V.myTeam]))} กำลังขยับเรือหนี…</p>`;
-  return h + stepBox('🚢', 'ขยับเรือ 1 ช่อง (8 ทิศ) หรืออยู่ที่เดิม', false,
-    `<div class="muted">คลิกช่องที่ไฮไลต์บน <b>ทะเลของเรา</b> — หมดเวลาแล้วเรืออยู่ที่เดิม</div>
-     <div class="row"><span>ไปที่: <b class="mono">${cellName(...(Lc.moveTo || myShip()))}</b></span>
+  const from = Lc.moveIdx !== null ? myShips()[Lc.moveIdx].pos : null;
+  return h + stepBox('🚢', 'ขยับเรือ 1 ลำ ไป 1 ช่อง (8 ทิศ) หรือไม่ขยับก็ได้', false,
+    `<div class="muted">คลิกเรือที่จะขยับบน <b>ทะเลของเรา</b> แล้วคลิกช่องที่ไฮไลต์ — หมดเวลาแล้วเรืออยู่ที่เดิม</div>
+     <div class="row"><span>${from && Lc.moveTo ? `ย้าย <b class="mono">${cellName(...from)}</b> → <b class="mono">${cellName(...Lc.moveTo)}</b>` : 'ไม่ขยับ'}</span>
      <button class="primary" data-act="move">ยืนยัน</button></div>`);
 }
 
 // ===== อีเวนต์ =====
-$('#hpText').textContent = MAX_HP;
 $('#btnCreate').onclick = () => createRoom();
 $('#btnJoin').onclick = () => joinRoom();
 $('#joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
@@ -960,8 +998,14 @@ $('#boardMine').addEventListener('click', e => {
   const cell = e.target.closest('.cell.click');
   if (!cell) return;
   const pos = [+cell.dataset.r, +cell.dataset.c];
-  if (iSetup()) Lc.placeSel = pos;
-  else if (canMoveShip()) Lc.moveTo = samePos(pos, myShip()) ? null : pos;
+  if (iSetup()) {
+    if (Lc.placeShips.some(p => samePos(p, pos))) Lc.placeShips = Lc.placeShips.filter(p => !samePos(p, pos));
+    else if (Lc.placeShips.length < SHIPS) Lc.placeShips.push(pos);
+  } else if (canMoveShip()) {
+    const idx = myShips().findIndex(sh => !sh.sunk && samePos(sh.pos, pos));
+    if (idx >= 0) { Lc.moveIdx = Lc.moveIdx === idx ? null : idx; Lc.moveTo = null; }
+    else Lc.moveTo = pos;
+  }
   render();
 });
 $('#boardEnemy').addEventListener('click', e => {
@@ -981,20 +1025,25 @@ $('#keyPool').addEventListener('click', e => {
   render();
 });
 
+$('#winOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget || e.target.closest('[data-act="closeWin"]')) { Lc.winClosed = true; renderWin(); }
+});
+
 $('#panel').addEventListener('click', e => {
   const btn = e.target.closest('[data-act]');
   if (!btn) return;
   const a = btn.dataset.act;
   switch (a) {
     case 'setup':
-      btn.disabled = true; act({ t: 'setup', keys: Lc.setupKeys, pos: Lc.placeSel }); return;
+      btn.disabled = true; act({ t: 'setup', keys: Lc.setupKeys, ships: Lc.placeShips }); return;
     case 'fire':
       btn.disabled = true; act({ t: 'fire', target: Lc.sel, keyIdx: Lc.keyIdx }); return;
     case 'try': {
-      const input = $('#cipherIn');
-      if (!parseCipher(input.value)) { input.classList.add('bad'); input.focus(); return; }
-      input.classList.remove('bad');
-      btn.disabled = true; act({ t: 'try', keyIdx: Lc.keyIdx, text: input.value }); Lc.keyIdx = null; return;
+      const inputs = [$('#c1In'), $('#c2In')];
+      const C = inputs.map(el => el.value.trim() === '' ? NaN : Number(el.value));
+      inputs.forEach((el, i) => el.classList.toggle('bad', !validVec([C[i], 0])));
+      if (!validVec(C)) { inputs.find(el => el.classList.contains('bad')).focus(); return; }
+      btn.disabled = true; act({ t: 'try', keyIdx: Lc.keyIdx, C }); Lc.keyIdx = null; return;
     }
     case 'announce':
       if (!confirm(`ประกาศพิกัดจากคีย์ #${+btn.dataset.key + 1}? ประกาศได้ครั้งเดียวต่อรอบ`)) return;
@@ -1003,7 +1052,7 @@ $('#panel').addEventListener('click', e => {
       if (!confirm('ไม่ประกาศพิกัดในเทิร์นนี้ และรับระเบิดลูกนี้เลย?')) return;
       btn.disabled = true; act({ t: 'takeBomb' }); return;
     case 'move':
-      btn.disabled = true; act({ t: 'move', pos: Lc.moveTo || myShip() }); return;
+      btn.disabled = true; act(Lc.moveTo ? { t: 'move', idx: Lc.moveIdx, pos: Lc.moveTo } : { t: 'move' }); return;
     case 'rematch':
       act({ t: 'rematch' }); return;
     case 'home':
