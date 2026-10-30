@@ -190,7 +190,7 @@
 
   /* ===== Pixel art — ขอบเหลี่ยม เงาแข็ง sprite ขอบคม ===== */
   .card, button, input.num, input.code, input.name, .team-col, .cell, .key, .badge, .timer, .banner,
-  .squad li, #log div, .explain, .win-card, .step-title .n, .key .tag, .mat { border-radius: 0; }
+  .squad li, #log div, .explain, .win-card, .step-title .n, .key .tag { border-radius: 0; }
   header { border-bottom: 3px solid var(--line); background: var(--panel); }
   header h1, #lobby h2 { font-family: "Pixelify Sans", "Kanit", sans-serif; }
   header h1 .muted { font-family: "Kanit", sans-serif; font-size: 15px; }
@@ -207,7 +207,7 @@
   input.code { font-size: 26px; }
   .badge, .timer, .key .tag, .step-title .n { border-width: 2px; }
   .timer { font-size: 20px; }
-  .mat { font-size: 19px; }
+  .mat { font-size: 19px; padding: 2px 10px; border-left-width: 2px; border-right-width: 2px; border-radius: 12px / 50%; }   /* วงเล็บโค้งแบบ ( ) */
   .explain { font-size: 17px; }
   .mono { font-size: 1.15em; }
   .board { gap: 3px; }
@@ -975,7 +975,8 @@ const KEY_HINT = {
 function renderKeys() {
   // เด้งขึ้นครั้งเดียวต่อขั้นตอน — ปิดไปแล้วไม่เด้งซ้ำ เปิดเองได้จากปุ่ม 🔑
   const need = keyNeed();
-  if (need && !Lc.keyAuto.includes(need)) { Lc.keyAuto.push(need); Lc.keysOpen = true; }
+  // ฝ่ายรับไม่เด้ง — ต้องแปลงรหัสลับเป็นตัวเลขก่อน แล้วค่อยกดเปิดคลังคีย์เอง
+  if (need && need !== 'try' && !Lc.keyAuto.includes(need)) { Lc.keyAuto.push(need); Lc.keysOpen = true; }
   $('#keyModal').classList.toggle('hidden', !Lc.keysOpen);
   $('#keyHint').classList.toggle('hidden', !need);
   $('#keyHint').textContent = need ? KEY_HINT[need]() : '';
@@ -1143,12 +1144,13 @@ function defendPanel() {
 
   // เลือกคีย์เองจากทั้ง 10 ชุด แล้วใส่รหัสลับ — ระบบคำนวณให้
   if (left > 0) {
-    h += stepBox(1, `เลือกคีย์ถอด (ลองได้อีก ${left}/${TRIES_PER_TURN} คีย์)`, k !== null,
-      `<div class="row muted">${k !== null ? `ใช้คีย์ #${k + 1}` : `เลือกคีย์ใดก็ได้จาก ${KEY_COUNT} ชุดในคลังคีย์`} ${KEYS_BTN}</div>`);
-    h += stepBox(2, 'แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง', false,
+    // ขั้นแรกต้องแปลงรหัสลับ (ตัวอักษร) เป็นตัวเลขเองก่อน แล้วค่อยเลือกคีย์มาถอด
+    h += stepBox(1, 'แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง', false,
       `<div class="muted">${[...Array(MOD).keys()].map(i => `${L(i)} = ${i}`).join(' • ')}</div>
-       <div class="row"><span class="eq">C = <span class="mat c1"><input class="num" id="c1In" inputmode="numeric" maxlength="1" autocomplete="off"><input class="num" id="c2In" inputmode="numeric" maxlength="1" autocomplete="off"></span></span>
-       <button class="primary" data-act="try" ${k !== null ? '' : 'disabled'}>🔓 ถอดรหัส</button></div>
+       <div class="row"><span class="eq">C = <span class="mat c1"><input class="num" id="c1In" inputmode="numeric" maxlength="1" autocomplete="off"><input class="num" id="c2In" inputmode="numeric" maxlength="1" autocomplete="off"></span></span></div>`);
+    h += stepBox(2, `เลือกคีย์ถอด (ลองได้อีก ${left}/${TRIES_PER_TURN} คีย์)`, k !== null,
+      `<div class="row muted">${k !== null ? `ใช้คีย์ #${k + 1}` : `เลือกคีย์ใดก็ได้จาก ${KEY_COUNT} ชุดในคลังคีย์`} ${KEYS_BTN}</div>
+       <div class="row"><button class="primary" data-act="try" ${k !== null ? '' : 'disabled'}>🔓 ถอดรหัส</button></div>
        <div class="muted">ระบบคำนวณ P = K⁻¹ · C mod ${MOD} ให้อัตโนมัติ</div>`);
   } else {
     h += `<div class="banner info">ลองถอดครบ ${TRIES_PER_TURN} คีย์แล้วในเทิร์นนี้</div>`;
@@ -1301,7 +1303,7 @@ $('#panel').addEventListener('click', e => {
 // Enter ในช่องรหัสลับ = กดถอดรหัส
 $('#panel').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
-  const btn = e.target.closest('.step').querySelector('[data-act="try"]');
+  const btn = $('#panel').querySelector('[data-act="try"]');
   if (btn) btn.click();
 });
 
