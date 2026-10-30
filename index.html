@@ -247,7 +247,10 @@
 <body>
 <header>
   <h1>⚓ Matrix <span>Battle</span> <span class="muted" style="font-weight:400">— ฝึก Hill Cipher mod 5 แบบ 2 ผู้เล่น</span></h1>
-  <div class="status" id="status">ยังไม่ได้เชื่อมต่อ</div>
+  <div class="row" style="margin:0">
+    <div class="status" id="status">ยังไม่ได้เชื่อมต่อ</div>
+    <button class="small" id="btnMute" title="เปิด/ปิดเสียง">🔊</button>
+  </div>
 </header>
 
 <main>
@@ -467,6 +470,69 @@ function spriteURL(rows) {
 }
 for (const [name, rows] of Object.entries(SPRITES)) document.documentElement.style.setProperty('--spr-' + name, spriteURL(rows));
 const spr = name => `<i class="spr ${name.split(' ').map((n, i) => i ? n : 'spr-' + n).join(' ')}"></i>`;
+
+// ===== เสียงประกอบ 8-bit — สร้างสดด้วย Web Audio API ไม่ใช้ไฟล์เสียง =====
+let actx = null;
+let muted = false;
+try { muted = localStorage.getItem('mtx-mute') === '1'; } catch {}
+function audio() {
+  if (!actx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    actx = new AC();
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+// โน้ตเดียว: คลื่น square/triangle/sawtooth/sine, slide = เลื่อนความถี่ (Hz) ตลอดช่วงเสียง
+function tone(freq, dur, { type = 'square', vol = .12, at = 0, slide = 0 } = {}) {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g).connect(ac.destination);
+  o.start(t); o.stop(t + dur + .02);
+}
+// เสียงซ่า (ระเบิด/น้ำกระเซ็น) — white noise ผ่าน low-pass ที่ค่อย ๆ ปิด
+function noise(dur, { vol = .3, at = 0, lp = 1200 } = {}) {
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime + at, len = Math.ceil(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource(), flt = ac.createBiquadFilter(), g = ac.createGain();
+  src.buffer = buf;
+  flt.type = 'lowpass';
+  flt.frequency.setValueAtTime(lp, t);
+  flt.frequency.exponentialRampToValueAtTime(80, t + dur);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  src.connect(flt).connect(g).connect(ac.destination);
+  src.start(t);
+}
+const melody = (freqs, type, step) => freqs.forEach((fq, i) => tone(fq, step * .9, { type, at: i * step }));
+const SFX = {
+  click:    () => tone(660, .05, { vol: .06 }),
+  fire:     () => tone(1000, .4, { slide: -800, vol: .1 }),
+  incoming: () => { tone(880, .1); tone(660, .1, { at: .15 }); tone(880, .1, { at: .3 }); },
+  decode:   () => melody([523, 784], 'square', .08),
+  boom:     () => { noise(.7, { vol: .45, lp: 900 }); tone(140, .5, { type: 'triangle', slide: -100, vol: .3 }); },
+  splash:   () => { noise(.4, { vol: .18, lp: 3500 }); tone(320, .25, { type: 'sine', slide: -220, vol: .08 }); },
+  good:     () => melody([523, 659, 784, 1047], 'square', .08),
+  bad:      () => melody([392, 311, 233], 'square', .14),
+  tick:     () => tone(1300, .04, { vol: .05 }),
+  win:      () => melody([523, 659, 784, 1047, 784, 1047, 1319], 'square', .13),
+  lose:     () => melody([392, 370, 349, 330, 262], 'triangle', .22),
+};
+function play(name) {
+  if (muted || !SFX[name]) return;
+  try { SFX[name](); } catch {}
+}
+const playLater = (ms, name) => setTimeout(() => play(name), ms);
 
 // ===== คณิตศาสตร์เมทริกซ์ (พอร์ตจาก matrix.py) =====
 const mul = (K, v) => [mod(K[0][0] * v[0] + K[0][1] * v[1]), mod(K[1][0] * v[0] + K[1][1] * v[1])];
@@ -846,7 +912,27 @@ let V = null;
 const Lc = { stamp: '', setupKeys: [], placeShips: [], sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false,
              keysOpen: false, keyAuto: [], deadline: 0 };
 
+// เล่นเสียงตามสิ่งที่เปลี่ยนไประหว่างมุมมองเก่า → ใหม่ (ทุกเครื่องคำนวณเองจาก state ที่ได้รับ)
+function soundsFor(prev, v) {
+  if (!prev || prev.me !== v.me) return;
+  let wait = 0;
+  const r = v.lastResult;
+  if (r && (!prev.lastResult || prev.lastResult.round !== r.round)) {
+    // ประกาศผิดจะจบเทิร์นทันที จึงไม่มีมุมมองแยก — เล่นเสียงผลประกาศก่อนเสียงระเบิด
+    if (r.announced && !r.announced.correct) { play(r.by === v.myTeam ? 'good' : 'bad'); wait = 450; }
+    playLater(wait, r.hit ? 'boom' : 'splash');
+    wait += 800;
+  }
+  if (v.phase === 'over' && prev.phase !== 'over') { playLater(wait, v.winner === v.myTeam ? 'win' : 'lose'); return; }
+  if (v.phase !== 'battle' || prev.phase !== 'battle') return;
+  const shootSide = v.myTeam === v.shootingTeam;
+  if (prev.turnPhase === 'aim' && v.turnPhase === 'defend') play(shootSide ? 'fire' : 'incoming');
+  if (v.triesCount > prev.triesCount && !shootSide) play('decode');
+  if (v.turnPhase === 'move' && prev.turnPhase !== 'move') play(shootSide ? 'bad' : 'good');   // ประกาศถูก
+}
+
 function applyView(v) {
+  soundsFor(V, v);
   V = v;
   Lc.deadline = v.remain ? Date.now() + v.remain : 0;
   const stamp = `${v.phase}|${v.round}|${v.turnPhase}`;
@@ -1052,12 +1138,17 @@ function timerText() {
   return `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 const timerHTML = () => Lc.deadline ? `<span class="timer" id="timer">${timerText()}</span>` : '';
+let lastTick = 0;
 setInterval(() => {
   const el = document.getElementById('timer');
   if (!el || !Lc.deadline) return;
   el.textContent = timerText();
   el.classList.toggle('low', Lc.deadline - Date.now() < 20000);
-}, 500);
+  // 10 วินาทีสุดท้าย ติ๊กทุกวินาที
+  const sec = Math.ceil((Lc.deadline - Date.now()) / 1000);
+  if (sec > 0 && sec <= 10 && sec !== lastTick) play('tick');
+  lastTick = sec;
+}, 250);
 
 // วาด panel ใหม่โดยไม่ให้ค่าที่ผู้เล่นกำลังพิมพ์หาย (state จากเพื่อนร่วมทีมเข้ามาได้ตลอด)
 function renderPanel() {
@@ -1197,6 +1288,18 @@ function movePanel() {
 }
 
 // ===== อีเวนต์ =====
+// ปุ่มเปิด/ปิดเสียง (จำค่าไว้ในเครื่อง) + เสียงคลิกเบา ๆ — คลิกแรกยังช่วยปลดล็อกเสียงของเบราว์เซอร์ด้วย
+function renderMute() { $('#btnMute').textContent = muted ? '🔇' : '🔊'; }
+$('#btnMute').onclick = () => {
+  muted = !muted;
+  try { localStorage.setItem('mtx-mute', muted ? '1' : '0'); } catch {}
+  renderMute();
+};
+renderMute();
+document.addEventListener('click', e => {
+  if (e.target.closest('#btnMute')) return;
+  if (e.target.closest('button:not(:disabled), .cell.click, .key.pick')) play('click');
+}, true);
 $('#btnCreate').onclick = () => createRoom();
 $('#btnJoin').onclick = () => joinRoom();
 $('#joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
