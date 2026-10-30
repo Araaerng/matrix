@@ -5,32 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Matrix Battle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&family=Pixelify+Sans:wght@400;700&family=VT323&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   :root {
-    --bg: #0b1726;
-    --panel: #12233a;
-    --panel-2: #183050;
-    --line: #27456b;
-    --text: #e6eef8;
-    --muted: #8fa6c2;
-    --accent: #38bdf8;
-    --accent-2: #0ea5e9;
-    --ok: #34d399;
-    --warn: #fbbf24;
-    --bad: #f87171;
-    --sea: #0f2c4a;
-    --sea-2: #123557;
-    --team-a: #38bdf8;
-    --team-b: #fb923c;
+    --bg: #111d35;
+    --panel: #1d2b53;
+    --panel-2: #29366f;
+    --line: #05070f;
+    --text: #fff1e8;
+    --muted: #a8b3cf;
+    --accent: #29adff;
+    --accent-2: #29adff;
+    --ok: #00e436;
+    --warn: #ffec27;
+    --bad: #ff004d;
+    --sea: #1a4f8b;
+    --sea-2: #05070f;
+    --team-a: #29adff;
+    --team-b: #ffa300;
+    --shadow: 4px 4px 0 #05070f;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font-family: "IBM Plex Sans Thai", system-ui, sans-serif; line-height: 1.5;
+    font-family: "Kanit", system-ui, sans-serif; line-height: 1.5;
   }
-  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .mono { font-family: "VT323", ui-monospace, monospace; }
   header {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap;
@@ -50,7 +51,7 @@
   button.primary { background: var(--accent-2); border-color: var(--accent-2); color: #04131f; font-weight: 700; }
   button.small { padding: 4px 10px; font-size: 13px; }
   input.num {
-    width: 56px; padding: 6px; text-align: center; font: inherit; font-family: "JetBrains Mono", monospace;
+    width: 56px; padding: 6px; text-align: center; font: inherit; font-family: "VT323", monospace;
     background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
   }
   input.num.ok { border-color: var(--ok); }
@@ -59,7 +60,7 @@
     font: inherit; padding: 8px 10px; background: var(--bg); color: var(--text);
     border: 1px solid var(--line); border-radius: 8px;
   }
-  input.code { font-family: "JetBrains Mono", monospace; font-size: 20px; letter-spacing: 4px; text-transform: uppercase; width: 170px; }
+  input.code { font-family: "VT323", monospace; font-size: 20px; letter-spacing: 4px; text-transform: uppercase; width: 170px; }
   input.name { width: 220px; }
 
   /* Landing */
@@ -93,7 +94,7 @@
   .win-card h2 { margin: 12px 0 4px; font-size: 28px; }
   .win-card p { margin: 6px 0; }
   .board { display: grid; grid-template-columns: 24px repeat(5, 1fr); gap: 4px; }
-  .board .lbl { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; font-family: "JetBrains Mono", monospace; }
+  .board .lbl { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; font-family: "VT323", monospace; }
   .cell {
     aspect-ratio: 1; border-radius: 6px; background: var(--sea); border: 1px solid var(--sea-2);
     display: flex; align-items: center; justify-content: center; font-size: 20px; padding: 0; position: relative; cursor: default;
@@ -109,7 +110,11 @@
   .cell.miss::after { content: "•"; position: absolute; color: var(--muted); font-size: 16px; right: 50%; bottom: 50%; translate: 50% 50%; }
 
   .side { display: flex; flex-direction: column; gap: 16px; grid-column: 3; grid-row: 1 / span 2; }
-  .keys-card { grid-column: 1 / 3; }
+  .key-modal { max-width: 860px; width: 100%; max-height: 90vh; overflow: auto; }
+  .key-modal-head { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  #keyHint { margin: 0 0 10px; }
+  #game { padding-bottom: 64px; }
+  .key-fab { position: fixed; right: 16px; bottom: 16px; z-index: 40; font-size: 16px; padding: 10px 16px; }
   .panel h3 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .step { border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 10px; }
   .step-title { font-weight: 600; margin-bottom: 6px; }
@@ -122,10 +127,10 @@
   .muted { color: var(--muted); font-size: 14px; }
   .explain {
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px;
-    font-family: "JetBrains Mono", monospace; font-size: 12.5px; white-space: pre-wrap; color: #cfe3f7;
+    font-family: "VT323", monospace; font-size: 12.5px; white-space: pre-wrap; color: #cfe3f7;
   }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); font-weight: 400; }
-  .timer { font-family: "JetBrains Mono", monospace; font-size: 15px; padding: 2px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+  .timer { font-family: "VT323", monospace; font-size: 15px; padding: 2px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
   .timer.low { color: var(--bad); border-color: var(--bad); }
   .banner { padding: 10px 12px; border-radius: 8px; margin-top: 8px; font-weight: 600; }
   .banner.ok { background: #0f3b2d; color: var(--ok); }
@@ -140,11 +145,11 @@
   .mat {
     display: inline-grid; gap: 0 10px; padding: 2px 8px; vertical-align: middle;
     border-left: 2px solid var(--muted); border-right: 2px solid var(--muted); border-radius: 6px;
-    font-family: "JetBrains Mono", monospace; text-align: center;
+    font-family: "VT323", monospace; text-align: center;
   }
   .mat.c2 { grid-template-columns: auto auto; }
   .mat.c1 { grid-template-columns: auto; }
-  .eq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; }
+  .eq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: "VT323", monospace; }
 
   .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
   .key {
@@ -154,7 +159,9 @@
   .key.pick { cursor: pointer; }
   .key.pick:hover { border-color: var(--accent); }
   .key.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56,189,248,.3); }
-  .key.banned { opacity: .5; }
+  .key.dim { opacity: .35; }
+  .key.banned, .key.banned.dim { opacity: 1; background: #05070f; border-color: #05070f; }
+  .key.banned small, .key.banned .kpair { opacity: .3; filter: grayscale(1); }
   .key small { color: var(--muted); }
   .key .tags { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 20px; }
   .key .tag { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line); }
@@ -162,7 +169,7 @@
   .key .tag.ban { color: var(--bad); border-color: var(--bad); }
   .key .tag.tried { color: var(--warn); border-color: var(--warn); }
   .kpair { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-  .kpair > span { color: var(--muted); font-family: "JetBrains Mono", monospace; }
+  .kpair > span { color: var(--muted); font-family: "VT323", monospace; }
 
   #log { max-height: 240px; overflow: auto; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
   #log div { padding: 4px 8px; border-radius: 6px; background: var(--bg); }
@@ -170,8 +177,7 @@
 
   @media (max-width: 1080px) {
     #game { grid-template-columns: 1fr 1fr; }
-    .side, .keys-card { grid-column: 1 / -1; grid-row: auto; }
-    .keys-card { order: 1; }
+    .side { grid-column: 1 / -1; grid-row: auto; }
   }
   @media (max-width: 680px) {
     main { padding: 12px 16px; }
@@ -179,6 +185,50 @@
     #game { grid-template-columns: 1fr; }
     .cell { font-size: 16px; }
   }
+
+  /* ===== Pixel art — ขอบเหลี่ยม เงาแข็ง sprite ขอบคม ===== */
+  .card, button, input.num, input.code, input.name, .team-col, .cell, .key, .badge, .timer, .banner,
+  .squad li, #log div, .explain, .win-card, .step-title .n, .key .tag, .mat { border-radius: 0; }
+  header { border-bottom: 3px solid var(--line); background: var(--panel); }
+  header h1, #lobby h2 { font-family: "Pixelify Sans", "Kanit", sans-serif; }
+  header h1 .muted { font-family: "Kanit", sans-serif; font-size: 15px; }
+  header h1 { font-size: 24px; text-shadow: 3px 3px 0 var(--line); }
+  .card, .win-card { border: 3px solid var(--line); box-shadow: var(--shadow); }
+  .team-col, .key, .explain, .squad li, #log div { border: 2px solid var(--line); }
+  .team-col.A { border-top: 5px solid var(--team-a); } .team-col.B { border-top: 5px solid var(--team-b); }
+  button { border: 3px solid var(--line); box-shadow: inset -3px -3px 0 rgba(0,0,0,.35), inset 3px 3px 0 rgba(255,255,255,.2); }
+  button:hover:not(:disabled) { border-color: var(--line); filter: brightness(1.15); }
+  button:active:not(:disabled) { box-shadow: inset 3px 3px 0 rgba(0,0,0,.35); translate: 0 2px; }
+  button.primary { color: var(--line); }
+  input.num, input.code, input.name { border: 3px solid var(--line); box-shadow: inset 3px 3px 0 rgba(0,0,0,.4); }
+  input.num { font-size: 22px; padding: 2px; }
+  input.code { font-size: 26px; }
+  .badge, .timer, .key .tag, .step-title .n { border-width: 2px; }
+  .timer { font-size: 20px; }
+  .mat { font-size: 19px; }
+  .explain { font-size: 17px; }
+  .mono { font-size: 1.15em; }
+  .board { gap: 3px; }
+  .board .lbl { font-size: 20px; }
+  .cell { border: 2px solid var(--line); background: var(--spr-water) 0 0 / 50% 50%, var(--sea); image-rendering: pixelated; }
+  .cell.click:hover { border-color: var(--warn); }
+  .cell.range { background: var(--spr-water) 0 0 / 50% 50%, #2a73c4; }
+  .cell.threat { background: var(--spr-water) 0 0 / 50% 50%, #7e2553; border-color: var(--bad); }
+  .cell.hit { background: var(--spr-water) 0 0 / 50% 50%, #5f2a3a; }
+  .cell.sel { outline: 3px solid var(--warn); outline-offset: -3px; }
+  .cell.cand { box-shadow: inset 0 0 0 3px var(--warn); }
+  .cell.hit::after { content: ""; inset: auto 2px 2px auto; width: 45%; height: 45%; background: var(--spr-hit) center / contain no-repeat; image-rendering: pixelated; }
+  .cell.hit:empty::after { inset: 10%; width: auto; height: auto; }
+  .cell.miss::after { content: ""; inset: 15%; translate: none; background: var(--spr-miss) center / contain no-repeat; image-rendering: pixelated; }
+  .spr { display: block; width: 80%; height: 80%; background: center / contain no-repeat; image-rendering: pixelated; pointer-events: none; }
+  .spr.faded { opacity: .35; }
+  .spr-ship { background-image: var(--spr-ship); }
+  .spr-sunk { background-image: var(--spr-sunk); }
+  .spr-target { background-image: var(--spr-target); }
+  .spr-trophy { background-image: var(--spr-trophy); }
+  .win-card .trophy .spr { width: 84px; height: 84px; margin: 0 auto; }
+  .key.on { box-shadow: 0 0 0 3px var(--accent); }
+  .step { border-top: 2px dashed var(--panel-2); }
 </style>
 </head>
 <body>
@@ -197,7 +247,7 @@
         <li>เล่น 2 คน: <b class="tA">ผู้เล่น A</b> และ <b class="tB">ผู้เล่น B</b> แต่ละคนมีเรือ <b>3 ลำ</b> (ลำละ 1 ช่อง วางตรงไหนก็ได้) บนทะเล 5×5 — ผลัดกันเป็น<b>ฝ่ายยิง</b>และ<b>ฝ่ายรับ</b></li>
         <li>ตอนเริ่มเกม แต่ละคนเลือก <b>คีย์ 3 ชุด</b> จากคลังคีย์ระบบ 10 ชุด (เป็นความลับ) ไว้ใช้ทั้งเกม แล้ววางเรือ 3 ลำ</li>
         <li><b>ฝ่ายยิง</b> เลือกพิกัด เลือก 1 ใน 3 คีย์ของตัวเอง แล้วส่งรหัสลับ C = K·P mod 5 เป็นตัวอักษร 2 ตัว (A=0, B=1, C=2, D=3, E=4)</li>
-        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที เลือกคีย์เองจากทั้ง 10 ชุด แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง ระบบคำนวณ P = K⁻¹·C mod 5 ให้ ลองได้ <b>เทิร์นละ 3 คีย์</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>4 ครั้งตลอดเกม</b>)</li>
+        <li><b>ฝ่ายรับ</b> มีเวลา 2 นาที เลือกคีย์เองจากทั้ง 10 ชุด แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง ระบบคำนวณ P = K⁻¹·C mod 5 ให้ ลองได้ <b>เทิร์นละ 3 คีย์</b> แล้วเลือก <b>1 คำตอบ</b> ประกาศพิกัด (สิทธิ์ประกาศมี <b>6 ครั้งตลอดเกม</b>)</li>
         <li>ประกาศ<b>ถูก</b> → คีย์ที่ผู้ยิงใช้ถูก<b>แบน</b> และขยับเรือ 1 ลำหนีได้ 1 ช่อง (8 ทิศ) • ประกาศผิด/หมดเวลา → รับระเบิดลูกนั้น เข้าก็เข้า พลาดก็พลาด</li>
         <li>ระบบประกาศ <b>เข้า / พลาด</b> ให้ทั้งสองฝ่ายทุกครั้ง • ยิงโดนลำไหนลำนั้นจม • แพ้เมื่อ <b>ถูกแบนคีย์ครบ 3</b> หรือ <b>เรือจมครบ 3 ลำ</b></li>
       </ol>
@@ -249,10 +299,15 @@
       <div class="members" id="enemyMembers"></div>
       <div class="board" id="boardEnemy"></div>
     </div>
-    <div class="card keys-card">
-      <h3 style="margin:0 0 8px;font-size:16px">คลังคีย์ระบบ 10 ชุด <span class="muted" style="font-weight:400">— คีย์เข้ารหัส K และคีย์ถอด K⁻¹ สำเร็จรูป</span></h3>
-      <div class="keys" id="keyPool"></div>
+    <div id="keyModal" class="overlay hidden">
+      <div class="card key-modal">
+        <h3 class="key-modal-head"><span>🔑 คลังคีย์ระบบ 10 ชุด <span class="muted" style="font-weight:400">— คีย์เข้ารหัส K และคีย์ถอด K⁻¹ สำเร็จรูป</span></span>
+          <button class="small" data-act="closeKeys">✕ ปิด</button></h3>
+        <div class="banner info hidden" id="keyHint"></div>
+        <div class="keys" id="keyPool"></div>
+      </div>
     </div>
+    <button id="btnKeys" class="primary key-fab hidden">🔑 คลังคีย์</button>
     <div class="side">
       <div class="card panel" id="panel"></div>
       <div class="card">
@@ -270,7 +325,7 @@ const MOD = 5;            // พิกัด 0-4 บนทะเล 5x5
 const SHIPS = 3;          // เรือ 3 ลำ ลำละ 1 ช่อง — ยิงโดน 1 ครั้ง = จม 1 ลำ
 const TEAM_KEYS = 3;      // คีย์ที่ผู้เล่นแต่ละคนเลือกใช้ทั้งเกม (ถูกแบนครบ = แพ้)
 const TRIES_PER_TURN = 3; // ฝ่ายรับเลือกคีย์มาลองถอดได้กี่คีย์ต่อเทิร์น
-const ANNOUNCES = 4;      // สิทธิ์ประกาศพิกัดของผู้เล่นแต่ละคนตลอดทั้งเกม (เทิร์นละไม่เกิน 1)
+const ANNOUNCES = 6;      // สิทธิ์ประกาศพิกัดของผู้เล่นแต่ละคนตลอดทั้งเกม (เทิร์นละไม่เกิน 1)
 const DECODE_TIME = 120;  // วินาที ให้ฝ่ายรับถอดรหัสและประกาศ
 const MOVE_TIME = 30;     // วินาที ให้ฝ่ายรับขยับเรือหลังประกาศถูก
 const MAX_PLAYERS = 2;     // ผู้เล่น A กับ B
@@ -288,6 +343,115 @@ const validPos = p => Array.isArray(p) && p.length === 2 && p.every(x => Number.
 const inGrid = p => p[0] < N && p[1] < N;
 const king = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));   // ระยะ 8 ทิศ
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+
+// ===== Pixel art — วาด sprite เป็นตาราง 12x12 (1 ตัวอักษร = 1 พิกเซล, . = โปร่งใส) แล้วแปลงเป็น SVG =====
+const PAL = { k: '#05070f', w: '#fff1e8', g: '#c2c3c7', d: '#5f574f', r: '#ff004d', o: '#ffa300', y: '#ffec27', u: '#29adff', l: '#3d7dc4' };
+const SPRITES = {
+  ship: [
+    '............',
+    '.....k......',
+    '.....kk.....',
+    '.....kwk....',
+    '.....kwwk...',
+    '.....kwwwk..',
+    '.....kkkkk..',
+    '.....k......',
+    'kkkkkkkkkkkk',
+    'kgdgdgdgdgdk',
+    '.kggggggggk.',
+    '..kkkkkkkk..',
+  ],
+  sunk: [
+    '....o.......',
+    '...oyo..o...',
+    '...oyo.oyo..',
+    '..oyyyooyo..',
+    '..oyrryyyo..',
+    '...orrryo...',
+    '....dddd....',
+    '..kkkkkkk...',
+    '.kddddddk...',
+    'kddddddk....',
+    'kkkkkkk.....',
+    '............',
+  ],
+  hit: [
+    '............',
+    '.o...y...o..',
+    '..o..y..o...',
+    '...oyyyo....',
+    '..oyrrryo...',
+    'yyyrwwwryyy.',
+    '..oyrrryo...',
+    '...oyyyo....',
+    '..o..y..o...',
+    '.o...y...o..',
+    '............',
+    '............',
+  ],
+  miss: [
+    '............',
+    '............',
+    '............',
+    '............',
+    '....u..u....',
+    '.u..w..w..u.',
+    '..u.wwww.u..',
+    '...wwuuww...',
+    '.uwuuuuuuwu.',
+    '..uuuuuuuu..',
+    '............',
+    '............',
+  ],
+  target: [
+    '.....r......',
+    '...rrrrr....',
+    '..r..r..r...',
+    '.r...r...r..',
+    '.r.......r..',
+    'rrrr.r.rrrr.',
+    '.r.......r..',
+    '.r...r...r..',
+    '..r..r..r...',
+    '...rrrrr....',
+    '.....r......',
+    '............',
+  ],
+  trophy: [
+    '............',
+    '..oyyyyyyo..',
+    'oooywyyyyooo',
+    'o.oywyyyyo.o',
+    'o.oyyyyyyo.o',
+    '.ooyyyyyyoo.',
+    '...oyyyyo...',
+    '.....yy.....',
+    '.....oo.....',
+    '...oooooo...',
+    '...dddddd...',
+    '............',
+  ],
+  water: [
+    '........',
+    '........',
+    '.ll.....',
+    'l..l....',
+    '........',
+    '........',
+    '.....ll.',
+    '....l..l',
+  ],
+};
+function spriteURL(rows) {
+  let rects = '';
+  rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (PAL[ch]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${PAL[ch]}"/>`;
+  }));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${rows[0].length} ${rows.length}" shape-rendering="crispEdges">${rects}</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+for (const [name, rows] of Object.entries(SPRITES)) document.documentElement.style.setProperty('--spr-' + name, spriteURL(rows));
+const spr = name => `<i class="spr ${name.split(' ').map((n, i) => i ? n : 'spr-' + n).join(' ')}"></i>`;
 
 // ===== คณิตศาสตร์เมทริกซ์ (พอร์ตจาก matrix.py) =====
 const mul = (K, v) => [mod(K[0][0] * v[0] + K[0][1] * v[1]), mod(K[1][0] * v[0] + K[1][1] * v[1])];
@@ -664,7 +828,8 @@ function joinRoom(attempt = 1) {
 //  ฝั่งหน้าจอ (ทุกคนรวม host) — วาดจาก view V + สถานะเฉพาะเครื่อง Lc
 // =====================================================================
 let V = null;
-const Lc = { stamp: '', setupKeys: [], placeShips: [], sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false, deadline: 0 };
+const Lc = { stamp: '', setupKeys: [], placeShips: [], sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false,
+             keysOpen: false, keyAuto: [], deadline: 0 };
 
 function applyView(v) {
   V = v;
@@ -672,7 +837,7 @@ function applyView(v) {
   const stamp = `${v.phase}|${v.round}|${v.turnPhase}`;
   if (stamp !== Lc.stamp) {
     const keepSetup = v.phase === 'setup' && Lc.stamp.startsWith('setup');
-    Object.assign(Lc, { stamp, sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false });
+    Object.assign(Lc, { stamp, sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false, keysOpen: false, keyAuto: [] });
     if (!keepSetup) Object.assign(Lc, { setupKeys: [], placeShips: [] });
   }
   render();
@@ -697,11 +862,14 @@ function render() {
   const inRoom = V.phase === 'lobby';
   $('#room').classList.toggle('hidden', !inRoom);
   $('#game').classList.toggle('hidden', inRoom);
+  const keysUsable = (V.phase === 'setup' || V.phase === 'battle') && !!me();
+  $('#btnKeys').classList.toggle('hidden', !keysUsable);
+  if (!keysUsable) $('#keyModal').classList.add('hidden');
   if (inRoom) { renderRoom(); return; }
   if (!me() && V.phase !== 'gone') return;
   renderHeaders();
   renderBoards();
-  renderKeys();
+  if (keysUsable) renderKeys();
   renderPanel();
   renderLog();
   renderWin();
@@ -767,11 +935,11 @@ function renderBoards() {
     const ship = ships[idx];
     const inRange = !!moveShip && idx < 0 && king([r, c], moveShip.pos) === 1;
     if (inRange) cls.push('range');
-    if (samePos(Lc.moveTo, [r, c])) { cls.push('sel'); content = '🚢'; }
-    else if (ship && ship.sunk) content = '🔥';
+    if (samePos(Lc.moveTo, [r, c])) { cls.push('sel'); content = spr('ship'); }
+    else if (ship && ship.sunk) content = spr('sunk');
     else if (ship) {
-      if (idx === Lc.moveIdx) { if (Lc.moveTo) content = '<span style="opacity:.35">🚢</span>'; else { cls.push('sel'); content = '🚢'; } }
-      else content = '🚢';
+      if (idx === Lc.moveIdx) { if (Lc.moveTo) content = spr('ship faded'); else { cls.push('sel'); content = spr('ship'); } }
+      else content = spr('ship');
     }
     return { cls, content, click: placing || inRange || (moving && !!ship && !ship.sunk) };
   });
@@ -783,11 +951,31 @@ function renderBoards() {
     if (shot) cls.push(shot.hit ? 'hit' : 'miss');
     const isSel = samePos(shownTarget, [r, c]);
     if (isSel) cls.push('sel');
-    return { cls, content: isSel ? '🎯' : '', click: aiming };
+    return { cls, content: isSel ? spr('target') : '', click: aiming };
   });
 }
 
+// ขั้นตอนที่ต้องเลือกคีย์ตอนนี้ (null = ไม่มี) — ใช้เด้ง popup คลังคีย์ขึ้นมาเอง
+function keyNeed() {
+  if (iSetup() && Lc.setupKeys.length < TEAM_KEYS) return 'setup';
+  if (iAim() && Lc.sel && Lc.keyIdx === null) return 'aim';
+  if (canTry() && Lc.keyIdx === null) return 'try';
+  return null;
+}
+const KEY_HINT = {
+  setup: () => `เลือกคีย์ ${TEAM_KEYS} ชุดไว้ใช้ทั้งเกม (${Lc.setupKeys.length}/${TEAM_KEYS}) — คลิกซ้ำเพื่อเอาออก`,
+  aim: () => 'เลือก 1 ในคีย์ของเราเพื่อเข้ารหัส',
+  try: () => `เลือกคีย์ที่จะลองถอด (ลองได้อีก ${TRIES_PER_TURN - V.tries.length}/${TRIES_PER_TURN} คีย์)`,
+};
+
 function renderKeys() {
+  // เด้งขึ้นครั้งเดียวต่อขั้นตอน — ปิดไปแล้วไม่เด้งซ้ำ เปิดเองได้จากปุ่ม 🔑
+  const need = keyNeed();
+  if (need && !Lc.keyAuto.includes(need)) { Lc.keyAuto.push(need); Lc.keysOpen = true; }
+  $('#keyModal').classList.toggle('hidden', !Lc.keysOpen);
+  $('#keyHint').classList.toggle('hidden', !need);
+  $('#keyHint').textContent = need ? KEY_HINT[need]() : '';
+
   const mine = myTeamV();
   const ownKeys = iSetup() ? Lc.setupKeys : (mine.keys || []);
   const triedBy = {};
@@ -796,6 +984,7 @@ function renderKeys() {
     const banned = [0, 1].filter(t => V.teams[t].banned.includes(i));
     const isOwn = ownKeys.includes(i);
     const pickable = iSetup() || (iAim() && isOwn && !mine.banned.includes(i)) || (canTry() && !triedBy[i]);
+    const dim = iAim() && !pickable;   // ขั้นตอนที่เลือกได้แค่คีย์ของเรา — คีย์อื่นจาง
     const on = iSetup() ? isOwn
       : iAim() || canTry() ? Lc.keyIdx === i
       : !!V.shot && V.shot.keyIdx === i;
@@ -804,7 +993,7 @@ function renderKeys() {
     banned.forEach(t => tags.push(`<span class="tag ban">แบน: ผู้เล่น ${TEAM[t]}</span>`));
     const tr = triedBy[i];
     if (tr) tags.push(`<span class="tag tried">ได้ ${cellName(...tr.P)}</span>`);
-    return `<div class="key ${pickable ? 'pick' : ''} ${on ? 'on' : ''} ${banned.length ? 'banned' : ''}" data-key="${i}">
+    return `<div class="key ${pickable ? 'pick' : ''} ${on ? 'on' : ''} ${dim ? 'dim' : ''} ${banned.length ? 'banned' : ''}" data-key="${i}">
       <small>คีย์ #${i + 1}</small>
       <div class="kpair"><span>K</span>${matHTML(K)}<span>K⁻¹</span>${matHTML(Kinv)}</div>
       <div class="tags">${tags.join('')}</div></div>`;
@@ -819,7 +1008,7 @@ function renderWin() {
   if (!show) return;
   const won = V.winner === V.myTeam, loser = 1 - V.winner;
   el.innerHTML = `<div class="win-card">
-    <div class="trophy">🏆</div>
+    <div class="trophy">${spr('trophy')}</div>
     <p class="muted" style="margin-top:12px">ผู้ชนะ</p>
     <h2 style="margin-top:0">${esc(V.names[V.winner])} <span style="font-size:18px">(${teamTag(V.winner)})</span></h2>
     <p class="muted" style="margin-top:12px">ผู้แพ้</p>
@@ -833,6 +1022,8 @@ function renderWin() {
 function renderLog() {
   $('#log').innerHTML = V.log.slice().reverse().map(e => `<div class="${e.cls}">${esc(e.text)}</div>`).join('');
 }
+
+const KEYS_BTN = '<button class="small" data-act="openKeys">🔑 เปิดคลังคีย์</button>';
 
 function stepBox(n, title, done, body) {
   return `<div class="step ${done ? 'done' : ''}"><div class="step-title"><span class="n">${done ? '✓' : n}</span>${title}</div>${body}</div>`;
@@ -916,7 +1107,7 @@ function setupPanel() {
   if (!isCaptain()) return h + `<div class="banner info">รอกัปตัน ${esc(nameOf(V.captains[V.myTeam]))} เลือกคีย์และวางเรือ…</div>`;
   const n = Lc.setupKeys.length;
   h += stepBox(1, `เลือกคีย์ ${TEAM_KEYS} ชุดใช้ทั้งเกม (${n}/${TEAM_KEYS})`, n === TEAM_KEYS,
-    `<div class="muted">คลิกที่ <b>คลังคีย์ระบบ</b> — ฝ่ายตรงข้ามจะไม่เห็นว่าเลือกอะไร ถ้าถูกแบนครบ ${TEAM_KEYS} ชุดจะแพ้</div>`);
+    `<div class="muted">เลือกใน <b>คลังคีย์</b> — ฝ่ายตรงข้ามจะไม่เห็นว่าเลือกอะไร ถ้าถูกแบนครบ ${TEAM_KEYS} ชุดจะแพ้</div><div class="row">${KEYS_BTN}</div>`);
   const placed = Lc.placeShips.length;
   h += stepBox(2, `วางเรือ ${SHIPS} ลำ (${placed}/${SHIPS})`, placed === SHIPS,
     `<div class="muted">คลิกช่องใดก็ได้บน <b>ทะเลของเรา</b> (คลิกซ้ำเพื่อเอาออก) — ตำแหน่ง: <b class="mono">${placed ? Lc.placeShips.map(p => cellName(...p)).join(', ') : '—'}</b></div>`);
@@ -933,8 +1124,8 @@ function shooterPanel() {
            : `<div class="muted">คุณเป็นผู้ยิงรอบนี้ — คลิกช่องบน <b>ทะเลฝ่ายตรงข้าม</b></div>`);
   if (!Lc.sel) return h;
   h += stepBox(2, 'เลือกคีย์เข้ารหัส', Lc.keyIdx !== null,
-    Lc.keyIdx !== null ? `<div class="muted">ใช้คีย์ #${Lc.keyIdx + 1}</div>`
-                       : `<div class="muted">คลิกคีย์ที่มีแท็ก "คีย์ของเรา" ในคลังคีย์ (ใช้ได้ ${usable.map(k => '#' + (k + 1)).join(', ')})</div>`);
+    Lc.keyIdx !== null ? `<div class="row muted">ใช้คีย์ #${Lc.keyIdx + 1} ${KEYS_BTN}</div>`
+                       : `<div class="row muted">เลือกคีย์ของเราในคลังคีย์ (ใช้ได้ ${usable.map(k => '#' + (k + 1)).join(', ')}) ${KEYS_BTN}</div>`);
   if (Lc.keyIdx === null) return h;
   const C = mul(KEY_TABLE[Lc.keyIdx].K, Lc.sel);
   h += `<div class="row muted" style="margin-top:10px">รหัสลับที่จะส่ง: <b class="mono">"${textOf(C)}"</b> <span>(C = ${vecText(C)})</span></div>
@@ -949,7 +1140,7 @@ function defendPanel() {
   // เลือกคีย์เองจากทั้ง 10 ชุด แล้วใส่รหัสลับ — ระบบคำนวณให้
   if (left > 0) {
     h += stepBox(1, `เลือกคีย์ถอด (ลองได้อีก ${left}/${TRIES_PER_TURN} คีย์)`, k !== null,
-      `<div class="muted">${k !== null ? `ใช้คีย์ #${k + 1}` : `คลิกคีย์ใดก็ได้ใน <b>คลังคีย์ระบบ</b> ${KEY_COUNT} ชุด`}</div>`);
+      `<div class="row muted">${k !== null ? `ใช้คีย์ #${k + 1}` : `เลือกคีย์ใดก็ได้จาก ${KEY_COUNT} ชุดในคลังคีย์`} ${KEYS_BTN}</div>`);
     h += stepBox(2, 'แปลงรหัสลับเป็นตัวเลขแล้วใส่ลงช่อง', false,
       `<div class="muted">${[...Array(MOD).keys()].map(i => `${L(i)} = ${i}`).join(' • ')}</div>
        <div class="row"><span class="eq">C = <span class="mat c1"><input class="num" id="c1In" inputmode="numeric" maxlength="1" autocomplete="off"><input class="num" id="c2In" inputmode="numeric" maxlength="1" autocomplete="off"></span></span>
@@ -1025,8 +1216,16 @@ $('#keyPool').addEventListener('click', e => {
   if (iSetup()) {
     if (Lc.setupKeys.includes(i)) Lc.setupKeys = Lc.setupKeys.filter(x => x !== i);
     else if (Lc.setupKeys.length < TEAM_KEYS) Lc.setupKeys.push(i);
-  } else Lc.keyIdx = i;
+    if (Lc.setupKeys.length === TEAM_KEYS) Lc.keysOpen = false;   // เลือกครบแล้วปิดให้
+  } else { Lc.keyIdx = i; Lc.keysOpen = false; }
   render();
+});
+$('#btnKeys').onclick = () => { Lc.keysOpen = !Lc.keysOpen; render(); };
+$('#keyModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget || e.target.closest('[data-act="closeKeys"]')) { Lc.keysOpen = false; render(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && Lc.keysOpen) { Lc.keysOpen = false; render(); }
 });
 
 $('#winOverlay').addEventListener('click', e => {
@@ -1059,6 +1258,8 @@ $('#panel').addEventListener('click', e => {
       btn.disabled = true; act(Lc.moveTo ? { t: 'move', idx: Lc.moveIdx, pos: Lc.moveTo } : { t: 'move' }); return;
     case 'rematch':
       act({ t: 'rematch' }); return;
+    case 'openKeys':
+      Lc.keysOpen = true; render(); return;
     case 'home':
       location.href = homeURL(); return;
   }
