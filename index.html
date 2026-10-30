@@ -93,6 +93,8 @@
   .win-card .trophy { font-size: 56px; line-height: 1; }
   .win-card h2 { margin: 12px 0 4px; font-size: 28px; }
   .win-card p { margin: 6px 0; }
+  #confirmModal { z-index: 60; }
+  .confirm-card { border-color: var(--warn); max-width: 420px; width: 100%; text-align: center; }
   .board { display: grid; grid-template-columns: 24px repeat(5, 1fr); gap: 4px; }
   .board .lbl { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; font-family: "VT323", monospace; }
   .cell {
@@ -286,6 +288,7 @@
 
   <!-- ===== ประกาศผู้ชนะ ===== -->
   <div id="winOverlay" class="overlay hidden"></div>
+  <div id="confirmModal" class="overlay hidden"></div>
 
   <!-- ===== เกม ===== -->
   <section id="game" class="hidden">
@@ -838,6 +841,7 @@ function applyView(v) {
   if (stamp !== Lc.stamp) {
     const keepSetup = v.phase === 'setup' && Lc.stamp.startsWith('setup');
     Object.assign(Lc, { stamp, sel: null, keyIdx: null, moveIdx: null, moveTo: null, winClosed: false, keysOpen: false, keyAuto: [] });
+    closeConfirm();   // ขั้นตอนเปลี่ยนแล้ว (เช่น หมดเวลา) ป๊อปอัปยืนยันที่ค้างอยู่ใช้ไม่ได้แล้ว
     if (!keepSetup) Object.assign(Lc, { setupKeys: [], placeShips: [] });
   }
   render();
@@ -1225,7 +1229,29 @@ $('#keyModal').addEventListener('click', e => {
   if (e.target === e.currentTarget || e.target.closest('[data-act="closeKeys"]')) { Lc.keysOpen = false; render(); }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && Lc.keysOpen) { Lc.keysOpen = false; render(); }
+  if (e.key !== 'Escape') return;
+  if (confirmYes) closeConfirm();
+  else if (Lc.keysOpen) { Lc.keysOpen = false; render(); }
+});
+
+// ป๊อปอัปยืนยันในเกม (แทน confirm() ของเบราว์เซอร์)
+let confirmYes = null;
+function askConfirm(html, yesLabel, onYes) {
+  confirmYes = onYes;
+  const el = $('#confirmModal');
+  el.innerHTML = `<div class="card confirm-card">${html}
+    <div class="row" style="justify-content:center;margin-top:16px">
+      <button data-confirm="no">ยกเลิก</button><button class="primary" data-confirm="yes">${yesLabel}</button></div></div>`;
+  el.classList.remove('hidden');
+  el.querySelector('[data-confirm="yes"]').focus();
+}
+function closeConfirm() { confirmYes = null; $('#confirmModal').classList.add('hidden'); }
+$('#confirmModal').addEventListener('click', e => {
+  const b = e.target.closest('[data-confirm]');
+  if (e.target !== e.currentTarget && !b) return;
+  const yes = b && b.dataset.confirm === 'yes' ? confirmYes : null;
+  closeConfirm();
+  if (yes) yes();
 });
 
 $('#winOverlay').addEventListener('click', e => {
@@ -1248,12 +1274,19 @@ $('#panel').addEventListener('click', e => {
       if (!validVec(C)) { inputs.find(el => el.classList.contains('bad')).focus(); return; }
       btn.disabled = true; act({ t: 'try', keyIdx: Lc.keyIdx, C }); Lc.keyIdx = null; return;
     }
-    case 'announce':
-      if (!confirm(`ประกาศพิกัดจากคีย์ #${+btn.dataset.key + 1}? ประกาศได้ครั้งเดียวต่อรอบ`)) return;
-      btn.disabled = true; act({ t: 'announce', keyIdx: +btn.dataset.key }); return;
+    case 'announce': {
+      const k = +btn.dataset.key, tr = V.tries.find(t => t.keyIdx === k);
+      if (!tr) return;
+      askConfirm(`<h3 style="margin:0 0 8px;justify-content:center">📣 ประกาศพิกัด <b class="mono">${cellName(...tr.P)}</b> ?</h3>
+        <p class="muted" style="margin:0">จากคีย์ #${k + 1} • ประกาศได้ครั้งเดียวต่อรอบ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES})</p>`,
+        '📣 ประกาศ', () => act({ t: 'announce', keyIdx: k }));
+      return;
+    }
     case 'takeBomb':
-      if (!confirm('ไม่ประกาศพิกัดในเทิร์นนี้ และรับระเบิดลูกนี้เลย?')) return;
-      btn.disabled = true; act({ t: 'takeBomb' }); return;
+      askConfirm(`<h3 style="margin:0 0 8px;justify-content:center">🛡️ ไม่ประกาศพิกัด?</h3>
+        <p class="muted" style="margin:0">เทิร์นนี้จะรับระเบิดลูกนี้เลย — เข้าก็เข้า พลาดก็พลาด</p>`,
+        'รับระเบิด', () => act({ t: 'takeBomb' }));
+      return;
     case 'move':
       btn.disabled = true; act(Lc.moveTo ? { t: 'move', idx: Lc.moveIdx, pos: Lc.moveTo } : { t: 'move' }); return;
     case 'rematch':
