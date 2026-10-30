@@ -202,6 +202,7 @@
   button:hover:not(:disabled) { border-color: var(--line); filter: brightness(1.15); }
   button:active:not(:disabled) { box-shadow: inset 3px 3px 0 rgba(0,0,0,.35); translate: 0 2px; }
   button.primary { color: var(--line); }
+  button.primary.orange { background: var(--team-b); border-color: var(--line); }   /* ปุ่มสำคัญโทนเหลืองส้ม */
   input.num, input.code, input.name { border: 3px solid var(--line); box-shadow: inset 3px 3px 0 rgba(0,0,0,.4); }
   input.num { font-size: 22px; padding: 2px; }
   input.code { font-size: 26px; }
@@ -1181,7 +1182,7 @@ function defendPanel() {
         ? `เลือก <b>1 คำตอบ</b> ประกาศ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES}) ถ้าถูก คีย์ผู้ยิงจะถูกแบนและขยับเรือได้ 1 ช่อง • ถ้าผิดหรือหมดเวลา ต้องรับระเบิดลูกนี้`
         : `ใช้สิทธิ์ประกาศครบ ${ANNOUNCES} ครั้งแล้ว — ต้องรับระเบิดทุกลูก`)
       : `กัปตัน ⭐${esc(nameOf(V.captains[V.myTeam]))} จะเลือก 1 คำตอบประกาศ (สิทธิ์ทั้งเกมเหลือ ${myTeamV().announcesLeft}/${ANNOUNCES}) — ช่วยกันถอดให้ทัน!`}</p>
-    ${isCaptain() ? '<div class="row"><button class="small" data-act="takeBomb">ไม่ประกาศ / รับระเบิดเลย</button></div>' : ''}</div>`;
+    ${isCaptain() ? '<div class="row"><button class="primary orange" data-act="takeBomb">🛡️ ไม่ประกาศ / รับระเบิดเลย</button></div>' : ''}</div>`;
   return h;
 }
 
